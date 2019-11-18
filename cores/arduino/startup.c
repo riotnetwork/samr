@@ -52,7 +52,7 @@ void SystemInit( void )
 {
 /* Various bits in the INTFLAG register can be set to one at startup.
 	   This will ensure that these bits are cleared */
-	OSCCTRL->INTFLAG.reg = OSCCTRL_INTFLAG_DFLLRDY;
+	//OSCCTRL->INTFLAG.reg = OSCCTRL_INTFLAG_DFLLRDY;
 	SUPC->INTFLAG.reg = SUPC_INTFLAG_BOD33RDY | SUPC_INTFLAG_BOD33DET;
   /*
    * Disable automatic NVM write operations (errata).
@@ -76,17 +76,17 @@ void SystemInit( void )
 // init external 32kHz xtal
 	OSC32KCTRL_XOSC32K_Type temp = OSC32KCTRL->XOSC32K;
 	/** Wait 65536 clock cycles until the clock source is considered stable */
-	 temp.bit.STARTUP = OSC32KCTRL_XOSC32K_STARTUP(4); 
+	 temp.bit.STARTUP = 4; 
 	 // always run the clock
-	 temp.bit.ONDEMAND = 0;
+	 temp.bit.ONDEMAND = false;
 	 // its a crystal, not a clock input
-	 temp.bit.XTALEN = OSC32KCTRL_XOSC32K_XTALEN;
+	 temp.bit.XTALEN = 1;
 	 // enable 32k output 
-	 temp.bit.EN32K = 1;
+	 temp.bit.EN32K = true;
     // run xtal in standby 
-	 temp.bit.RUNSTDBY = OSC32KCTRL_OSC32K_RUNSTDBY;
+	 temp.bit.RUNSTDBY = 1;
 	 // commit changes
-	OSC32KCTRL->XOSC32K = temp;
+	OSC32KCTRL->XOSC32K.reg = temp.reg;
 	
 	// enable xosc32k clock
 	OSC32KCTRL->XOSC32K.reg |= OSC32KCTRL_XOSC32K_ENABLE;
@@ -107,6 +107,8 @@ void SystemInit( void )
 	if (coarse == 0x3f) {
 		coarse = 0x1f;
 	}
+	// wait for dfll register to be ready before we write to it
+	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
 	
 	OSCCTRL_DFLLVAL_Type dfllval = OSCCTRL->DFLLVAL;
 	dfllval.bit.COARSE = coarse; /** Coarse calibration value (closed loop mode) */
@@ -117,7 +119,7 @@ void SystemInit( void )
 	dfllMul.bit.CSTEP = (0x1f / 4); //MAX_COARSE_STEP_SIZE
 	dfllMul.bit.FSTEP = (0xff / 4); //MAX_FINE_STEP_SIZE
 	dfllMul.bit.MUL	 = (48000000 / 32768); // MULTIPLY_FACTOR
-	OSCCTRL->DFLLMUL = dfllMul;
+	OSCCTRL->DFLLMUL.reg = dfllMul.reg;
 	
 	OSCCTRL_DFLLCTRL_Type dfllCtrl = OSCCTRL->DFLLCTRL;
 	dfllCtrl.bit.MODE = OSCCTRL_DFLLCTRL_MODE; // closed loop mode
@@ -127,7 +129,7 @@ void SystemInit( void )
 	dfllCtrl.bit.CCDIS = 0;/** Enable a chill cycle, where the DFLL output frequency is not measured */
 	dfllCtrl.bit.ONDEMAND = 0; /** Disable on demand mode */
 	dfllCtrl.bit.RUNSTDBY = 0; /** Do not run in standby */
-    OSCCTRL->DFLLCTRL = dfllCtrl;
+    OSCCTRL->DFLLCTRL.reg = dfllCtrl.reg;
 	// clock not enabled yet
 	//
 
@@ -151,7 +153,7 @@ void SystemInit( void )
 */
 	gclkConfig.reg = GCLK->GENCTRL[1].reg;
 	gclkConfig.bit.DIV = 1;
-	gclkConfig.bit.SRC = GCLK_SOURCE_XOSC32K;
+	gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_XOSC32K_Val;
 	gclkConfig.bit.OE = 0;
 	gclkConfig.bit.RUNSTDBY = 0;
 
@@ -168,8 +170,8 @@ void SystemInit( void )
 */
 	gclkConfig.reg = GCLK->GENCTRL[2].reg;
 	gclkConfig.bit.DIV = 5;
-	gclkConfig.bit.IDC = GCLK_GENCTRL_IDC;
-	gclkConfig.bit.SRC = GCLK_SOURCE_OSC16M;
+	gclkConfig.bit.IDC = 1;
+	gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_OSC16M_Val;
 	gclkConfig.bit.OE = 0;
 	gclkConfig.bit.RUNSTDBY = 0;
 
@@ -186,7 +188,7 @@ void SystemInit( void )
 */
 	gclkConfig.reg = GCLK->GENCTRL[3].reg;
 	gclkConfig.bit.DIV = 1;
-	gclkConfig.bit.SRC = GCLK_SOURCE_DFLL48M;
+	gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_DFLL48M_Val;
 	gclkConfig.bit.OE = 0;
 	gclkConfig.bit.RUNSTDBY = 0;
 
@@ -235,7 +237,7 @@ void SystemInit( void )
 */
 gclkConfig.reg = GCLK->GENCTRL[0].reg;
 gclkConfig.bit.DIV = 1;
-gclkConfig.bit.SRC = GCLK_SOURCE_DFLL48M;
+gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_DFLL48M_Val;
 gclkConfig.bit.OE = 0;
 gclkConfig.bit.RUNSTDBY = 0;
 GCLK->GENCTRL[0].reg = gclkConfig.reg;
