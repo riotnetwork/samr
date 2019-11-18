@@ -45,7 +45,7 @@ else
   endif
 endif
 
-ARM_GCC_PATH?=$(MODULE_PATH)/tools/arm-none-eabi-gcc/7-2017q4/bin/arm-none-eabi-
+ARM_GCC_PATH?=$(MODULE_PATH)/../arduino/tools/arm-none-eabi-gcc/7-2017q4/bin/arm-none-eabi-
 BUILD_PATH=build
 
 # -----------------------------------------------------------------------------
@@ -76,7 +76,7 @@ BIN=$(NAME).bin
 HEX=$(NAME).hex
 
 
-INCLUDES=-I"$(MODULE_PATH)/tools/CMSIS/CMSIS_5-5.6.0/CMSIS/Core/Include/" -I"$(MODULE_PATH)/tools/CMSIS-Atmel/1.0.0/CMSIS/Device/ATMEL/"
+INCLUDES=-I"$(MODULE_PATH)/tools/CMSIS/5.6.0/CMSIS/Core/Include/" -I"$(MODULE_PATH)/tools/CMSIS-Atmel/1.0.1/CMSIS/Device/ATMEL/"
 
 # -----------------------------------------------------------------------------
 # Linker options
@@ -148,10 +148,10 @@ print_info:
 	@echo Compiling bootloader using
 	@echo BASE PATH = $(MODULE_PATH)
 	@echo GCC  PATH = $(ARM_GCC_PATH)
-#	@echo OS        = $(OS)
-#	@echo SHELL     = $(SHELL)
-#	@echo TERM      = $(TERM)
-#	"$(CC)" -v
+	@echo OS        = $(OS)
+	@echo SHELL     = $(SHELL)
+	@echo TERM      = $(TERM)
+	"$(CC)" -v
 #	env
 
 copy_for_atmel_studio: $(BIN) $(HEX)
