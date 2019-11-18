@@ -205,26 +205,35 @@ void board_init(void) {
 		/* Wait for clock synchronization */
 	}
 	
+	
+	// wait for dfll register to be ready before we write to it
+	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
+	
 /* DFLL Enable (Open and Closed Loop) */
 // system_clock_source_dfll_set_config_errata_9905;
 /* Disable ONDEMAND mode while writing configurations */
 	OSCCTRL->DFLLCTRL.bit.ONDEMAND = 0;
-	OSCCTRL->DFLLCTRL.reg = OSCCTRL_DFLLCTRL_ENABLE;
-
 	dfllCtrl.bit.ENABLE = 1; // set enable bit
+	OSCCTRL->DFLLCTRL.reg = OSCCTRL_DFLLCTRL_ENABLE;
+	
+	OSCCTRL->DFLLMUL.reg = 0;
+	// wait for dfll register to be ready before we write to it
+	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
 	OSCCTRL->DFLLMUL.reg = dfllMul.reg;
-	OSCCTRL->DFLLVAL.reg = dfllval.reg;
+
+		// wait for dfll register to be ready before we write to it
+	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
+		OSCCTRL->DFLLVAL.reg = dfllval.reg;
+	
+		// wait for dfll register to be ready before we write to it
+	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
 	/* Write full configuration to DFLL control register */
 	OSCCTRL->DFLLCTRL.reg = 0;
 	while (!(OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY)) {
 		/* Wait for DFLL sync */
 	}
-	OSCCTRL->DFLLCTRL.reg =dfllCtrl.reg;
-	/* CPU and BUS clocks */
-	MCLK->BUPDIV.reg = MCLK_BUPDIV_BUPDIV_DIV1;/** Divide Main clock by one */
-	MCLK->LPDIV.reg = MCLK_LPDIV_LPDIV_DIV1; /** Divide low power clock by 1*/
-	MCLK->CPUDIV.reg = MCLK_CPUDIV_CPUDIV_DIV1; /**(MCLK_CPUDIV) Divide by 1 */
-	
+	OSCCTRL->DFLLCTRL.reg = dfllCtrl.reg;
+
 /* Enable generator 0 as it depends on other generators*/
 /* Configure GCLK generator 0 (Main Clock)
 * run in standby : false
@@ -240,4 +249,9 @@ gclkConfig.bit.RUNSTDBY = false;
 GCLK->GENCTRL[0].reg = gclkConfig.reg;
 gclk_gen_sync(0);
 GCLK->GENCTRL[0].reg |= GCLK_GENCTRL_GENEN;
+	/* CPU and BUS clocks */
+	MCLK->BUPDIV.reg = MCLK_BUPDIV_BUPDIV_DIV1;/** Divide Main clock by one */
+	MCLK->LPDIV.reg = MCLK_LPDIV_LPDIV_DIV1; /** Divide low power clock by 1*/
+	MCLK->CPUDIV.reg = MCLK_CPUDIV_CPUDIV_DIV1; /**(MCLK_CPUDIV) Divide by 1 */
+	
 }
