@@ -78,11 +78,11 @@ void SystemInit( void )
 	/** Wait 65536 clock cycles until the clock source is considered stable */
 	 temp.bit.STARTUP = 4; 
 	 // always run the clock
-	 temp.bit.ONDEMAND = false;
+	 temp.bit.ONDEMAND = 0;
 	 // its a crystal, not a clock input
 	 temp.bit.XTALEN = 1;
 	 // enable 32k output 
-	 temp.bit.EN32K = true;
+	 temp.bit.EN32K = 1;
     // run xtal in standby 
 	 temp.bit.RUNSTDBY = 1;
 	 // commit changes
@@ -250,8 +250,8 @@ void SystemInit( void )
 gclkConfig.reg = GCLK->GENCTRL[0].reg;
 gclkConfig.bit.DIV = 1;
 gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_DFLL48M_Val;
-gclkConfig.bit.OE = false;
-gclkConfig.bit.RUNSTDBY = false;
+gclkConfig.bit.OE = 0;
+gclkConfig.bit.RUNSTDBY = 0;
 GCLK->GENCTRL[0].reg = gclkConfig.reg;
 gclk_gen_sync(0);
 GCLK->GENCTRL[0].reg |= GCLK_GENCTRL_GENEN;
