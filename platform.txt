@@ -137,7 +137,7 @@ tools.avrdude.upload.network_pattern="{network_cmd}" -address {serial.port} -por
 #
 # BOSSA
 #
-tools.bossac.path={runtime.tools.bossac-1.7.0-arduino3.path}
+tools.bossac.path={runtime.tools.bossac-1.9.1-riot.path}
 tools.bossac.cmd=bossac
 tools.bossac.cmd.windows=bossac.exe
 
@@ -153,7 +153,7 @@ tools.bossac.upload.network_pattern="{network_cmd}" -address {serial.port} -port
 #
 # BOSSA (ignore binary size)
 #
-tools.bossacI.path={runtime.tools.bossac-1.7.0-arduino3.path}
+tools.bossacI.path={runtime.tools.bossac-1.9.1-riot.path}
 tools.bossacI.cmd=bossac
 tools.bossacI.cmd.windows=bossac.exe
 
