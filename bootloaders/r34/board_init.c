@@ -40,7 +40,7 @@ static void gclk_gen_sync(int generator) {
 void board_init(void) {
 /* Various bits in the INTFLAG register can be set to one at startup.
 	   This will ensure that these bits are cleared */
-	OSCCTRL->INTFLAG.reg = OSCCTRL_INTFLAG_DFLLRDY;
+	// OSCCTRL->INTFLAG.reg = OSCCTRL_INTFLAG_DFLLRDY;
 	SUPC->INTFLAG.reg = SUPC_INTFLAG_BOD33RDY | SUPC_INTFLAG_BOD33DET;
   /*
    * Disable automatic NVM write operations (errata).
@@ -64,17 +64,17 @@ void board_init(void) {
 // init external 32kHz xtal
 	OSC32KCTRL_XOSC32K_Type temp = OSC32KCTRL->XOSC32K;
 	/** Wait 65536 clock cycles until the clock source is considered stable */
-	 temp.bit.STARTUP = OSC32KCTRL_XOSC32K_STARTUP(4); 
+	 temp.bit.STARTUP = 4; 
 	 // always run the clock
 	 temp.bit.ONDEMAND = false;
 	 // its a crystal, not a clock input
-	 temp.bit.XTALEN = OSC32KCTRL_XOSC32K_XTALEN;
+	 temp.bit.XTALEN = 1;
 	 // enable 32k output 
 	 temp.bit.EN32K = true;
     // run xtal in standby 
-	 temp.bit.RUNSTDBY = OSC32KCTRL_OSC32K_RUNSTDBY;
+	 temp.bit.RUNSTDBY = 1;
 	 // commit changes
-	OSC32KCTRL->XOSC32K = temp;
+	OSC32KCTRL->XOSC32K.reg = temp.reg;
 	
 	// enable xosc32k clock
 	OSC32KCTRL->XOSC32K.reg |= OSC32KCTRL_XOSC32K_ENABLE;
@@ -95,27 +95,35 @@ void board_init(void) {
 	if (coarse == 0x3f) {
 		coarse = 0x1f;
 	}
+	// wait for dfll register to be ready before we write to it
+	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
 	
 	OSCCTRL_DFLLVAL_Type dfllval = OSCCTRL->DFLLVAL;
 	dfllval.bit.COARSE = coarse; /** Coarse calibration value (closed loop mode) */
 	dfllval.bit.FINE = 0xff / 4; /* Midpoint fine calibration value (closed loop mode) */
 	OSCCTRL->DFLLVAL= dfllval;
 	
+	// wait for dfll register to be ready before we write to it
+	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
+	
 	OSCCTRL_DFLLMUL_Type dfllMul = OSCCTRL->DFLLMUL;
 	dfllMul.bit.CSTEP = (0x1f / 4); //MAX_COARSE_STEP_SIZE
 	dfllMul.bit.FSTEP = (0xff / 4); //MAX_FINE_STEP_SIZE
 	dfllMul.bit.MUL	 = (48000000 / 32768); // MULTIPLY_FACTOR
-	OSCCTRL->DFLLMUL = dfllMul;
+	OSCCTRL->DFLLMUL.reg = dfllMul.reg;
+	
+	// wait for dfll register to be ready before we write to it
+	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
 	
 	OSCCTRL_DFLLCTRL_Type dfllCtrl = OSCCTRL->DFLLCTRL;
-	dfllCtrl.bit.MODE = OSCCTRL_DFLLCTRL_MODE; // closed loop mode
+	dfllCtrl.bit.MODE = 1; // closed loop mode
 	dfllCtrl.bit.LLAW = 0;  /** Keep DFLL lock when the device wakes from sleep */
 	dfllCtrl.bit.STABLE = 0;/** Keep tracking after the DFLL has gotten a fine lock */
 	dfllCtrl.bit.QLDIS = 0;/** Enable the QuickLock feature for looser lock requirements on the DFLL */
 	dfllCtrl.bit.CCDIS = 0;/** Enable a chill cycle, where the DFLL output frequency is not measured */
 	dfllCtrl.bit.ONDEMAND = 0; /** Disable on demand mode */
 	dfllCtrl.bit.RUNSTDBY = 0; /** Do not run in standby */
-    OSCCTRL->DFLLCTRL = dfllCtrl;
+    OSCCTRL->DFLLCTRL.reg = dfllCtrl.reg;
 	// clock not enabled yet
 	//
 
@@ -139,7 +147,7 @@ void board_init(void) {
 */
 	gclkConfig.reg = GCLK->GENCTRL[1].reg;
 	gclkConfig.bit.DIV = 1;
-	gclkConfig.bit.SRC = GCLK_SOURCE_XOSC32K;
+	gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_XOSC32K_Val;
 	gclkConfig.bit.OE = false;
 	gclkConfig.bit.RUNSTDBY = false;
 
@@ -156,8 +164,8 @@ void board_init(void) {
 */
 	gclkConfig.reg = GCLK->GENCTRL[2].reg;
 	gclkConfig.bit.DIV = 5;
-	gclkConfig.bit.IDC = GCLK_GENCTRL_IDC;
-	gclkConfig.bit.SRC = GCLK_SOURCE_OSC16M;
+	gclkConfig.bit.IDC = 1;
+	gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_OSC16M_Val;
 	gclkConfig.bit.OE = false;
 	gclkConfig.bit.RUNSTDBY = false;
 
@@ -174,7 +182,7 @@ void board_init(void) {
 */
 	gclkConfig.reg = GCLK->GENCTRL[3].reg;
 	gclkConfig.bit.DIV = 1;
-	gclkConfig.bit.SRC = GCLK_SOURCE_DFLL48M;
+	gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_DFLL48M_Val;
 	gclkConfig.bit.OE = false;
 	gclkConfig.bit.RUNSTDBY = false;
 
@@ -197,26 +205,35 @@ void board_init(void) {
 		/* Wait for clock synchronization */
 	}
 	
+	
+	// wait for dfll register to be ready before we write to it
+	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
+	
 /* DFLL Enable (Open and Closed Loop) */
 // system_clock_source_dfll_set_config_errata_9905;
 /* Disable ONDEMAND mode while writing configurations */
 	OSCCTRL->DFLLCTRL.bit.ONDEMAND = 0;
-	OSCCTRL->DFLLCTRL.reg = OSCCTRL_DFLLCTRL_ENABLE;
-
 	dfllCtrl.bit.ENABLE = 1; // set enable bit
+	OSCCTRL->DFLLCTRL.reg = OSCCTRL_DFLLCTRL_ENABLE;
+	
+	OSCCTRL->DFLLMUL.reg = 0;
+	// wait for dfll register to be ready before we write to it
+	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
 	OSCCTRL->DFLLMUL.reg = dfllMul.reg;
-	OSCCTRL->DFLLVAL.reg = dfllval.reg;
+
+		// wait for dfll register to be ready before we write to it
+	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
+		OSCCTRL->DFLLVAL.reg = dfllval.reg;
+	
+		// wait for dfll register to be ready before we write to it
+	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
 	/* Write full configuration to DFLL control register */
 	OSCCTRL->DFLLCTRL.reg = 0;
 	while (!(OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY)) {
 		/* Wait for DFLL sync */
 	}
-	OSCCTRL->DFLLCTRL.reg =dfllCtrl.reg;
-	/* CPU and BUS clocks */
-	MCLK->BUPDIV.reg = MCLK_BUPDIV_BUPDIV_DIV1;/** Divide Main clock by one */
-	MCLK->LPDIV.reg = MCLK_LPDIV_LPDIV_DIV1; /** Divide low power clock by 1*/
-	MCLK->CPUDIV.reg = MCLK_CPUDIV_CPUDIV_DIV1; /**(MCLK_CPUDIV) Divide by 1 */
-	
+	OSCCTRL->DFLLCTRL.reg = dfllCtrl.reg;
+
 /* Enable generator 0 as it depends on other generators*/
 /* Configure GCLK generator 0 (Main Clock)
 * run in standby : false
@@ -226,11 +243,15 @@ void board_init(void) {
 */
 gclkConfig.reg = GCLK->GENCTRL[0].reg;
 gclkConfig.bit.DIV = 1;
-gclkConfig.bit.SRC = GCLK_SOURCE_DFLL48M;
+gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_DFLL48M_Val;
 gclkConfig.bit.OE = false;
 gclkConfig.bit.RUNSTDBY = false;
 GCLK->GENCTRL[0].reg = gclkConfig.reg;
 gclk_gen_sync(0);
 GCLK->GENCTRL[0].reg |= GCLK_GENCTRL_GENEN;
+	/* CPU and BUS clocks */
+	MCLK->BUPDIV.reg = MCLK_BUPDIV_BUPDIV_DIV1;/** Divide Main clock by one */
+	MCLK->LPDIV.reg = MCLK_LPDIV_LPDIV_DIV1; /** Divide low power clock by 1*/
+	MCLK->CPUDIV.reg = MCLK_CPUDIV_CPUDIV_DIV1; /**(MCLK_CPUDIV) Divide by 1 */
 	
 }

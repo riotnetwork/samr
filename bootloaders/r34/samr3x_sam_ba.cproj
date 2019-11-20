@@ -13,7 +13,7 @@
     <OutputFileExtension>.elf</OutputFileExtension>
     <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
     <AssemblyName>samd21_sam_ba</AssemblyName>
-    <Name>samd21_sam_ba</Name>
+    <Name>samr3x_sam_ba</Name>
     <RootNamespace>samd21_sam_ba</RootNamespace>
     <ToolchainFlavour>Native</ToolchainFlavour>
     <KeepTimersRunning>true</KeepTimersRunning>
