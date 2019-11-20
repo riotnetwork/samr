@@ -20,7 +20,7 @@
 # https://github.com/arduino/Arduino/wiki/Arduino-IDE-1.5---3rd-party-Hardware-specification
 
 name=RIOT SAMR (32-bits ARM Cortex-M0+) Boards
-version=1.0.0
+version=1.0.1
 
 # Compile variables
 # -----------------
@@ -137,7 +137,7 @@ tools.avrdude.upload.network_pattern="{network_cmd}" -address {serial.port} -por
 #
 # BOSSA
 #
-tools.bossac.path={runtime.tools.bossac-1.9.1-riot.path}
+tools.bossac.path={runtime.tools.bossac-1.7.0-riot.path}
 tools.bossac.cmd=bossac
 tools.bossac.cmd.windows=bossac.exe
 
@@ -153,7 +153,7 @@ tools.bossac.upload.network_pattern="{network_cmd}" -address {serial.port} -port
 #
 # BOSSA (ignore binary size)
 #
-tools.bossacI.path={runtime.tools.bossac-1.9.1-riot.path}
+tools.bossacI.path={runtime.tools.bossac-1.7.0-riot.path}
 tools.bossacI.cmd=bossac
 tools.bossacI.cmd.windows=bossac.exe
 
