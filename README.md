@@ -1,3 +1,7 @@
+## RIOT R34 Stamp
+This core is an arduino port for the Microchip ATSAMR34 and R35 Series microcontrollers - ATSAML21 with integrated LoRa Tranceivers
+
+![R34 pinout](https://github.com/riotnetwork/samr-json/blob/master/Pinouts/PNG/R34-Stamp.png)
 
 ## License and credits
 
