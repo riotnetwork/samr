@@ -22,7 +22,7 @@ riot_r34_edbg.pid.0=0x2157
 
 riot_r34_edbg.upload.tool=openocd
 riot_r34_edbg.upload.protocol=sam-ba
-riot_r34_edbg.upload.maximum_size=262144
+riot_r34_edbg.upload.maximum_size=253952
 riot_r34_edbg.upload.use_1200bps_touch=false
 riot_r34_edbg.upload.wait_for_upload_port=false
 riot_r34_edbg.upload.native_usb=false
@@ -68,7 +68,7 @@ riot_r34_native.vid.3.bootloader.file=r34/samr34.bin
 
 riot_r34_native.upload.tool=bossac
 riot_r34_native.upload.protocol=sam-ba
-riot_r34_native.upload.maximum_size=262144
+riot_r34_native.upload.maximum_size=253952
 riot_r34_native.upload.use_1200bps_touch=true
 riot_r34_native.upload.wait_for_upload_port=true
 riot_r34_native.upload.native_usb=true
