@@ -34,6 +34,7 @@ extern const uint32_t __text_start__;
 #define APP_START 0x00002004
 #endif
 
+
 static inline bool nvmReady(void) {
         return NVMCTRL->INTFLAG.reg & NVMCTRL_INTFLAG_READY;
 }

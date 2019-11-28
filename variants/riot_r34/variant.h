@@ -196,7 +196,8 @@ extern SERCOM sercom3;
 extern SERCOM sercom4;
 extern SERCOM sercom5;
 
-extern Uart Serial;
+//extern Uart Serial;
+extern Uart Serial1;
 
 #endif
 
@@ -230,7 +231,7 @@ unsigned int PINCOUNT_fn();
 #define SERIAL_PORT_HARDWARE_OPEN   Serial1
 
 // Legacy way to describe serial port on pins 0-1
-#define Serial   SerialUSB
+//#define Serial   SerialUSB
 
 #endif /* _VARIANT_ARDUINO_ZERO_ */
 

@@ -27,12 +27,12 @@
  * | 3          | 3                |  PA28  |                 | EIC/EXTINT[8] GCLK_IO[0] 
  * | 4          | ~4               |  PB23  |                 | EIC/EXTINT[7] SERCOM5/PAD[3] *TC3/WO[1] GCLK_IO[1] CCL0/OUT[0]
  * | 5          | ~5               |  PA23  |                 | EIC/EXTINT[7] PTC/X[11] SERCOM3/PAD[1] SERCOM5/PAD[1] TC0/WO[1] *TCC0/WO[5] USB/SOF 1kHz[6] GCLK_IO[7] CCL2/ IN[1]
- * | 6          | ~6               |  PA22  |                 | EIC/EXTINT[6] PTC/X[10] SERCOM3/PAD[0] SERCOM5/PAD[0] *TC0/WO[0] TCC0/WO[4] GCLK_IO[6] CCL2/ IN[0]
+ * | 6          | ~6               |  PA22  |                 | EIC/EXTINT[6] PTC/X[10] SERCOM3/PAD[0] SERCOM5/PAD[0] TC0/WO[0] *TCC0/WO[4] GCLK_IO[6] CCL2/ IN[0]
  * | 7          | 7                |  PA27  |                 | EIC/EXTINT[15] GCLK_IO[0]
- * | 8          | ~8               |  PA14  |                 | EIC/EXTINT[14] SERCOM2/PAD[2] SERCOM4/PAD[2] TC4/WO[0] *TCC0/WO[4] GCLK_IO[0]
+ * | 8          | 8                |  PA14  |                 | EIC/EXTINT[14] SERCOM2/PAD[2] SERCOM4/PAD[2] TC4/WO[0] ```/WO[4] GCLK_IO[0]
  * | 9          | ~9               |  PB22  |                 | EIC/EXTINT[6] SERCOM5/PAD[2] *TC3/WO[0] GCLK_IO[0] CCL0/ IN[0]
  * +------------+------------------+--------+-----------------+------------------------------
- * |            | SPI              |        |                 |
+ * |            | SPI             |                 |
  * +------------+------------------+--------+-----------------+------------------------------
  * | 10         | 10               |  PA19  |  SPI SCK        | EIC/EXTINT[3] PTC/X[7] SERCOM1/PAD[3] *SERCOM3/PAD[3] TC4/WO[1] TCC0/WO[3] AC/CMP[1] CCL0/OUT[0]
  * | 11         | 11               |  PA18  |  SPI MOSI       | EIC/EXTINT[2] PTC/X[6] SERCOM1/PAD[2] *SERCOM3/PAD[2] TC4/WO[0] TCC0/WO[2] AC/CMP[0] CCL0/IN[2]
@@ -41,8 +41,8 @@
  * +------------+------------------+--------+-----------------+------------------------------
  * |            | I2C              |        |                 |
  * +------------+------------------+--------+-----------------+------------------------------
- * | 14         | ~14              |  PA08  |  I2C SDA        | NMI ADC/AIN[16] PTC/X[0] PTC/Y[6] SERCOM0/PAD[0] *SERCOM2/PAD[0] TCC0/WO[0] TCC1/WO[2] CCL1/IN[3]
- * | 15         | ~15              |  PA09  |  I2C SCL        | EIC/EXTINT[9] ADC/AIN[17] PTC/X[1] PTC/Y[7] SERCOM0/PAD[1] *SERCOM2/PAD[1] TCC0/WO[1] TCC1/WO[3] CCL1/ IN[1] 
+ * | 14         | 14               |  PA08  |  I2C SDA        | NMI ADC/AIN[16] PTC/X[0] PTC/Y[6] SERCOM0/PAD[0] *SERCOM2/PAD[0] TCC0/WO[0] TCC1/WO[2] CCL1/IN[3]
+ * | 15         | 15               |  PA09  |  I2C SCL        | EIC/EXTINT[9] ADC/AIN[17] PTC/X[1] PTC/Y[7] SERCOM0/PAD[1] *SERCOM2/PAD[1] TCC0/WO[1] TCC1/WO[3] CCL1/ IN[1] 
  * +------------+------------------+--------+-----------------+------------------------------
  * |            | Analog pins      |        |                 |
  * +------------+------------------+--------+-----------------+------------------------------
@@ -155,6 +155,7 @@ SERCOM sercom4( SERCOM4 ) ;
 SERCOM sercom5( SERCOM5 ) ;
 
 Uart Serial1( &sercom0, PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX ) ;
+
 void SERCOM0_Handler()
 {
   Serial1.IrqHandler();

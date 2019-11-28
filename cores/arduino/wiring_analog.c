@@ -234,7 +234,7 @@ void analogWrite(uint32_t pin, uint32_t value)
 		  GCM_TCC0_TCC1,// TCC0
 		  GCM_TCC0_TCC1,// TCC1
 		  GCM_TCC2,		// TCC2
-		  GCM_TC0_TC1,	// TC0
+		//  GCM_TC0_TC1,	// TC0 is not used for pwm / timer
 		  GCM_TC0_TC1,	// TC1
 		  GCM_TC2_TC3,	// TC2
 		  GCM_TC2_TC3,	// TC3

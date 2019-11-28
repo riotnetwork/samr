@@ -114,15 +114,21 @@ void SystemInit( void )
 	dfllval.bit.COARSE = coarse; /** Coarse calibration value (closed loop mode) */
 	dfllval.bit.FINE = 0xff / 4; /* Midpoint fine calibration value (closed loop mode) */
 	OSCCTRL->DFLLVAL= dfllval;
-	
+
+	// wait for dfll register to be ready before we write to it
+	while ((OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0);
+
 	OSCCTRL_DFLLMUL_Type dfllMul = OSCCTRL->DFLLMUL;
 	dfllMul.bit.CSTEP = (0x1f / 4); //MAX_COARSE_STEP_SIZE
 	dfllMul.bit.FSTEP = (0xff / 4); //MAX_FINE_STEP_SIZE
 	dfllMul.bit.MUL	 = (48000000 / 32768); // MULTIPLY_FACTOR
 	OSCCTRL->DFLLMUL.reg = dfllMul.reg;
+
+	// wait for dfll register to be ready before we write to it
+	while ((OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0);
 	
 	OSCCTRL_DFLLCTRL_Type dfllCtrl = OSCCTRL->DFLLCTRL;
-	dfllCtrl.bit.MODE = OSCCTRL_DFLLCTRL_MODE; // closed loop mode
+	dfllCtrl.bit.MODE = 1; // closed loop mode
 	dfllCtrl.bit.LLAW = 0;  /** Keep DFLL lock when the device wakes from sleep */
 	dfllCtrl.bit.STABLE = 0;/** Keep tracking after the DFLL has gotten a fine lock */
 	dfllCtrl.bit.QLDIS = 0;/** Enable the QuickLock feature for looser lock requirements on the DFLL */
@@ -233,6 +239,7 @@ void SystemInit( void )
 	
 		// wait for dfll register to be ready before we write to it
 	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
+
 	/* Write full configuration to DFLL control register */
 	OSCCTRL->DFLLCTRL.reg = 0;
 	while (!(OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY)) {
@@ -259,7 +266,8 @@ GCLK->GENCTRL[0].reg |= GCLK_GENCTRL_GENEN;
 	MCLK->BUPDIV.reg = MCLK_BUPDIV_BUPDIV_DIV1;/** Divide Main clock by one */
 	MCLK->LPDIV.reg = MCLK_LPDIV_LPDIV_DIV1; /** Divide low power clock by 1*/
 	MCLK->CPUDIV.reg = MCLK_CPUDIV_CPUDIV_DIV1; /**(MCLK_CPUDIV) Divide by 1 */
-  SystemCoreClock=VARIANT_MCK ;
+  
+	SystemCoreClock=VARIANT_MCK ;
 
   /* ----------------------------------------------------------------------------------------------
    * 8) Load ADC factory calibration values

@@ -89,7 +89,7 @@ extern const void* g_apTCInstances[TCC_INST_NUM+TC_INST_NUM] ;
 GCM_TCC0_TCC1,// TCC0
 GCM_TCC0_TCC1,// TCC1
 GCM_TCC2,		// TCC2
-GCM_TC0_TC1,	// TC0
+GCM_TC0_TC1,	// TC0 not used
 GCM_TC0_TC1,	// TC1
 GCM_TC2_TC3,	// TC2
 GCM_TC2_TC3,	// TC3
@@ -124,8 +124,6 @@ typedef enum _EPWMChannel
   
   PWM5_CH0=TC3_CH0,
   PWM5_CH1=TC3_CH1,
-
-
 } EPWMChannel ;
 
 typedef enum _EPortType
