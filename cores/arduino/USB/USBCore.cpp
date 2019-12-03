@@ -271,22 +271,23 @@ void USBDeviceClass::init()
 	digitalWrite(PIN_LED_RXL, HIGH);
 #endif
 
-	// Enable USB clock
+	/* Enable USB clock */
 	MCLK->APBBMASK.reg |= MCLK_APBBMASK_USB;
 
-	// Set up the USB DP/DN pins
+	/* Set up the USB DP/DN pins */
 	PORT->Group[0].PINCFG[PIN_PA24G_USB_DM].bit.PMUXEN = 1;
-	PORT->Group[0].PMUX[PIN_PA24G_USB_DM/2].reg &= ~(0xF << (4 * (PIN_PA24G_USB_DM & 0x01u)));
-	PORT->Group[0].PMUX[PIN_PA24G_USB_DM/2].reg |= MUX_PA24G_USB_DM << (4 * (PIN_PA24G_USB_DM & 0x01u));
+	PORT->Group[0].PMUX[PIN_PA24G_USB_DM / 2].reg &= ~(0xF << (4 * (PIN_PA24G_USB_DM & 0x01u)));
+	PORT->Group[0].PMUX[PIN_PA24G_USB_DM / 2].reg |= MUX_PA24G_USB_DM << (4 * (PIN_PA24G_USB_DM & 0x01u));
+	
 	PORT->Group[0].PINCFG[PIN_PA25G_USB_DP].bit.PMUXEN = 1;
-	PORT->Group[0].PMUX[PIN_PA25G_USB_DP/2].reg &= ~(0xF << (4 * (PIN_PA25G_USB_DP & 0x01u)));
-	PORT->Group[0].PMUX[PIN_PA25G_USB_DP/2].reg |= MUX_PA25G_USB_DP << (4 * (PIN_PA25G_USB_DP & 0x01u));
+	PORT->Group[0].PMUX[PIN_PA25G_USB_DP / 2].reg &= ~(0xF << (4 * (PIN_PA25G_USB_DP & 0x01u)));
+	PORT->Group[0].PMUX[PIN_PA25G_USB_DP / 2].reg |= MUX_PA25G_USB_DP << (4 * (PIN_PA25G_USB_DP & 0x01u));
 
 	/* ----------------------------------------------------------------------------------------------
-   * Put Generic Clock Generator 0 as source for Generic Clock Multiplexer 4 (USB reference)
-   */
-  GCLK->PCHCTRL[GCM_USB].reg = ( GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0 );
-  while ( (GCLK->PCHCTRL[GCM_USB].reg & GCLK_PCHCTRL_CHEN) == 0 );        // wait for sync
+	* Put Generic Clock Generator 0 as source for Generic Clock Multiplexer 4 (USB reference)
+	*/
+	GCLK->PCHCTRL[GCM_USB].reg = (GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0);
+	while ((GCLK->PCHCTRL[GCM_USB].reg & GCLK_PCHCTRL_CHEN) == 0);        // wait for sync
 
 	USB_SetHandler(&UDD_Handler);
 
@@ -296,6 +297,7 @@ void USBDeviceClass::init()
 	usbd.calibrate();
 	usbd.setUSBDeviceMode();
 	usbd.runInStandby();
+	//usbd.setLowSpeed();
 	usbd.setFullSpeed();
 
 	// Configure interrupts
@@ -430,6 +432,9 @@ void USBDeviceClass::initEP(uint32_t ep, uint32_t config)
 		usbd.epBank1SetSize(ep, 64);
 		usbd.epBank1SetAddress(ep, &udd_ep_in_cache_buffer[ep]);
 		usbd.epBank1SetType(ep, 1); // CONTROL IN
+		
+	//	usbd.epBank0SetReady(ep);
+	//	usbd.epBank1ResetReady(ep);
 
 		// Release OUT EP
 		usbd.epReleaseOutBank0(ep, 64);
@@ -914,6 +919,7 @@ void USBDeviceClass::ISRHandler()
 			}
 		}
 	}
+	
 }
 
 /*
