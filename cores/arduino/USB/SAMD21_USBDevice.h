@@ -195,20 +195,52 @@ void USBDevice_SAMD21G18x::reset() {
 
 void USBDevice_SAMD21G18x::calibrate() {
 	// Load Pad Calibration data from non-volatile memory
-	uint32_t *pad_transn_p = (uint32_t *) USB_FUSES_TRANSN_ADDR;
-	uint32_t *pad_transp_p = (uint32_t *) USB_FUSES_TRANSP_ADDR;
-	uint32_t *pad_trim_p   = (uint32_t *) USB_FUSES_TRIM_ADDR;
+	//uint32_t *pad_transn_p = (uint32_t *) USB_FUSES_TRANSN_ADDR;
+	//uint32_t *pad_transp_p = (uint32_t *) USB_FUSES_TRANSP_ADDR;
+	//uint32_t *pad_trim_p   = (uint32_t *) USB_FUSES_TRIM_ADDR;
+//
+	//uint32_t pad_transn = (*pad_transn_p & USB_FUSES_TRANSN_Msk) >> USB_FUSES_TRANSN_Pos;
+	//uint32_t pad_transp = (*pad_transp_p & USB_FUSES_TRANSP_Msk) >> USB_FUSES_TRANSP_Pos;
+	//uint32_t pad_trim   = (*pad_trim_p   & USB_FUSES_TRIM_Msk  ) >> USB_FUSES_TRIM_Pos;
+//
+	//if (pad_transn == 0x1F)  // maximum value (31)
+		//pad_transn = 5;
+	//if (pad_transp == 0x1F)  // maximum value (31)
+		//pad_transp = 29;
+	//if (pad_trim == 0x7)     // maximum value (7)
+		//pad_trim = 3;
+		
+		
+		  /* Load Pad Calibration */
+		  uint32_t pad_transn =(uint8_t)( *((uint32_t *)(USB_FUSES_TRANSN_ADDR)
+		  + (USB_FUSES_TRANSN_Pos / 32))
+		  >> (USB_FUSES_TRANSN_Pos % 32))
+		  & ((1 << 5) - 1);
 
-	uint32_t pad_transn = (*pad_transn_p & USB_FUSES_TRANSN_Msk) >> USB_FUSES_TRANSN_Pos;
-	uint32_t pad_transp = (*pad_transp_p & USB_FUSES_TRANSP_Msk) >> USB_FUSES_TRANSP_Pos;
-	uint32_t pad_trim   = (*pad_trim_p   & USB_FUSES_TRIM_Msk  ) >> USB_FUSES_TRIM_Pos;
+		  if (pad_transn == 0x1F)
+		  {
+			  pad_transn = 5;
+		  }
 
-	if (pad_transn == 0x1F)  // maximum value (31)
-		pad_transn = 5;
-	if (pad_transp == 0x1F)  // maximum value (31)
-		pad_transp = 29;
-	if (pad_trim == 0x7)     // maximum value (7)
-		pad_trim = 3;
+		  uint32_t pad_transp =(uint8_t)( *((uint32_t *)(USB_FUSES_TRANSP_ADDR)
+		  + (USB_FUSES_TRANSP_Pos / 32))
+		  >> (USB_FUSES_TRANSP_Pos % 32))
+		  & ((1 << 5) - 1);
+
+		  if (pad_transp == 0x1F)
+		  {
+			  pad_transp = 29;
+		  }
+
+		  uint32_t pad_trim =(uint8_t)( *((uint32_t *)(USB_FUSES_TRIM_ADDR)
+		  + (USB_FUSES_TRIM_Pos / 32))
+		  >> (USB_FUSES_TRIM_Pos % 32))
+		  & ((1 << 3) - 1);
+
+		  if (pad_trim == 0x7)
+		  {
+			  pad_trim = 3;
+		  }
 
 	usb.PADCAL.bit.TRANSN = pad_transn;
 	usb.PADCAL.bit.TRANSP = pad_transp;
