@@ -57,7 +57,7 @@ extern "C"
 extern "C" unsigned int PINCOUNT_fn();
 #endif
 #define PINS_COUNT           (PINCOUNT_fn())
-#define NUM_DIGITAL_PINS     (21u) 
+#define NUM_DIGITAL_PINS     (30u) 
 #define NUM_ANALOG_INPUTS    (2u)
 #define NUM_ANALOG_OUTPUTS   (0u)
 // #define analogInputToDigitalPin(p)  ((p < NUM_ANALOG_INPUTS) ? (p) + NUM_DIGITAL_PINS : -1)
@@ -115,10 +115,10 @@ static const uint8_t A1  = PIN_A1;
 #define PAD_SPI_TX			  SPI_PAD_2_SCK_3
 #define PAD_SPI_RX			  SERCOM_RX_PAD_0
 
-static const uint8_t SS1 = PIN_SPI_SS;
-static const uint8_t MOSI1 = PIN_SPI_MOSI;
-static const uint8_t MISO1 = PIN_SPI_MISO;
-static const uint8_t SCK1 = PIN_SPI_SCK;
+static const uint8_t SS = PIN_SPI_SS;
+static const uint8_t MOSI = PIN_SPI_MOSI;
+static const uint8_t MISO = PIN_SPI_MISO;
+static const uint8_t SCK = PIN_SPI_SCK;
 
 // SPI interface ( SPI1 goes "outside")
 #define PIN_SPI1_MISO         (13u)
@@ -129,10 +129,10 @@ static const uint8_t SCK1 = PIN_SPI_SCK;
 #define PAD_SPI1_TX           SPI_PAD_2_SCK_3
 #define PAD_SPI1_RX           SERCOM_RX_PAD_0
 
-static const uint8_t SS	  = PIN_SPI1_SS;
-static const uint8_t MOSI = PIN_SPI1_MOSI;
-static const uint8_t MISO = PIN_SPI1_MISO;
-static const uint8_t SCK  = PIN_SPI1_SCK;
+static const uint8_t SS1	  = PIN_SPI1_SS;
+static const uint8_t MOSI1 = PIN_SPI1_MOSI;
+static const uint8_t MISO1 = PIN_SPI1_MISO;
+static const uint8_t SCK1  = PIN_SPI1_SCK;
 /*
  * Wire Interfaces
  */
@@ -172,8 +172,8 @@ static const uint8_t SCL = PIN_WIRE_SCL1;
 #define SX1276_DIO3 		(24u)
 #define SX1276_DIO4			(25u)
 #define SX1276_DIO5 		(26u)
-#define SX1276_SPI		SPI1
-#define SX1276_SPI_CS_PIN  PIN_SPI1_SS
+#define SX1276_SPI		SPI
+#define SX1276_SPI_CS_PIN  PIN_SPI_SS
 
 #ifdef __cplusplus
 }
