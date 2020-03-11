@@ -56,7 +56,6 @@ void SystemInit( void )
 	SUPC->INTFLAG.reg = SUPC_INTFLAG_BOD33RDY | SUPC_INTFLAG_BOD33DET;
   /*
    * Disable automatic NVM write operations (errata).
-   * Disable NVM cache on D51 (errata). Will be re-enabled after reset at end of programming.
    */
  	NVMCTRL->CTRLB.bit.MANW = 1;
   /* Set 1 Flash Wait State for 48MHz (2 for the L21 and C21), cf tables 20.9 and 35.27 in SAMD21 Datasheet
@@ -95,7 +94,7 @@ void SystemInit( void )
 
 // init DFLL
 // wait for dfll register to be ready before we write to it
-	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
+	while ( ( OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0 );
 
 	/* Using DFLL48M COARSE CAL value from NVM Software Calibration Area Mapping 
 	   in DFLL.COARSE helps to output a frequency close to 48 MHz.*/
@@ -112,8 +111,15 @@ void SystemInit( void )
 	}
 	
 
+	// system_clock_source_dfll_set_config_errata_9905;
+/* Disable ONDEMAND mode while writing configurations */
+		
+	
+	
+	OSCCTRL->DFLLCTRL.bit.ONDEMAND = 0;
+	OSCCTRL->DFLLCTRL.bit.ENABLE = 1;
 	// wait for dfll register to be ready before we write to it
-	while ((OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0);
+	while ( ( OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0 );
 
 	OSCCTRL_DFLLMUL_Type dfllMul = OSCCTRL->DFLLMUL;
 	dfllMul.bit.CSTEP = (0x1f / 4); //MAX_COARSE_STEP_SIZE
@@ -122,7 +128,7 @@ void SystemInit( void )
 //	OSCCTRL->DFLLMUL.reg = dfllMul.reg;
 
 	// wait for dfll register to be ready before we write to it
-//	while ((OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0);
+//	while ((OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0);
 	
 	OSCCTRL_DFLLCTRL_Type dfllCtrl = OSCCTRL->DFLLCTRL;
 	dfllCtrl.bit.MODE = 1; // closed loop mode
@@ -135,7 +141,7 @@ void SystemInit( void )
  //   OSCCTRL->DFLLCTRL.reg = dfllCtrl.reg;
 	
 	// wait for dfll register to be ready before we write to it
-//	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
+//	while ( ( OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0 );
 	
 	OSCCTRL_DFLLVAL_Type dfllval = OSCCTRL->DFLLVAL;
 	dfllval.bit.COARSE = coarse; /** Coarse calibration value (closed loop mode) */
@@ -231,7 +237,7 @@ void SystemInit( void )
 /* Disable ONDEMAND mode while writing configurations */
 		
 	// wait for dfll register to be ready before we write to it
-	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
+	while ( ( OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0 );
 	
 	OSCCTRL->DFLLCTRL.bit.ONDEMAND = 0;
 	OSCCTRL->DFLLCTRL.bit.ENABLE = 1;
@@ -241,15 +247,15 @@ void SystemInit( void )
 	OSCCTRL->DFLLMUL.reg = 0;
 	OSCCTRL->DFLLVAL.reg = 0;
 	// wait for dfll register to be ready before we write to it
-	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
+	while ( ( OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0 );
 	OSCCTRL->DFLLMUL.reg = dfllMul.reg;
 
 		// wait for dfll register to be ready before we write to it
-	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
+	while ( ( OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0 );
 		OSCCTRL->DFLLVAL.reg = dfllval.reg;
 	
 		// wait for dfll register to be ready before we write to it
-	while ( ( OSCCTRL->INTFLAG.reg & OSCCTRL_INTFLAG_DFLLRDY) == 0 );
+	while ( ( OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0 );
 
 	/* Write full configuration to DFLL control register */
 	OSCCTRL->DFLLCTRL.reg = 0;
