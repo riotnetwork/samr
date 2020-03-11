@@ -1,0 +1,19 @@
+#######################################
+# Syntax Coloring Map RTC
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+RTC KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+begin			KEYWORD2
+setTime 		KEYWORD2
+setDate			KEYWORD2
+setAlarmTime		KEYWORD2
+enableAlarm		KEYWORD2
+setClockDivider	KEYWORD2
