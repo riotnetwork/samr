@@ -1,5 +1,5 @@
 ;
-; Copyright 2016 Arduino LLC (http://www.arduino.cc/)
+; Copyright 2017 Arduino AG (http://www.arduino.cc/)
 ;
 ; Arduino is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
@@ -26,16 +26,15 @@
 ;
 
 [Strings]
-DriverPackageDisplayName="Genuino USB Driver (for SAMD boards)"
-ManufacturerName="Arduino LLC (www.arduino.cc)"
+DriverPackageDisplayName="Arduino USB Driver (for SAMD boards)"
+ManufacturerName="Arduino AG (www.arduino.cc)"
 ServiceName="USB RS-232 Emulation Driver"
-mkr1000.sketch.name="Genuino MKR1000"
-mkr1000.bootloader.name="Genuino MKR1000 bootloader"
-zero.sketch.name="Genuino Zero"
-zero.bootloader.name="Genuino Zero bootloader"
+bossa.name="Bossa Program Port"
+riotr34.sketch.name="Riot R34 Stamp"
+riotr34.bootloader.name="Riot R34 Stamp bootloader"
 
 [DefaultInstall]
-CopyINF=genuino-samd.inf
+CopyINF=riot-stamp.inf
 
 [Version]
 Class=Ports
@@ -43,9 +42,9 @@ ClassGuid={4D36E978-E325-11CE-BFC1-08002BE10318}
 Signature="$Windows NT$"
 Provider=%ManufacturerName%
 DriverPackageDisplayName=%DriverPackageDisplayName%
-CatalogFile=genuino-samd.cat
+CatalogFile=arduino-samd.cat
 ; DriverVer date is MM/DD/YYYY
-DriverVer=02/11/2016,1.0.0.0
+DriverVer=07/08/2019,1.4.3.0
 
 [Manufacturer]
 %ManufacturerName%=DeviceList, NTamd64, NTia64
@@ -55,22 +54,19 @@ FakeModemCopyFileSection=12
 DefaultDestDir=12
 
 [DeviceList]
-%mkr1000.sketch.name%=DriverInstall, USB\VID_2341&PID_824E&MI_00
-%mkr1000.bootloader.name%=DriverInstall, USB\VID_2341&PID_024E
-%zero.sketch.name%=DriverInstall, USB\VID_2341&PID_824D&MI_00
-%zero.bootloader.name%=DriverInstall, USB\VID_2341&PID_024D
+%bossa.name%=DriverInstall, USB\VID_03EB&PID_6124
+%riotr34.sketch.name%=DriverInstall, USB\VID_04D8&PID_EC21&MI_00
+%riotr34.bootloader.name%=DriverInstall, USB\VID_04D8&PID_EC22
 
 [DeviceList.NTamd64]
-%mkr1000.sketch.name%=DriverInstall, USB\VID_2341&PID_824E&MI_00
-%mkr1000.bootloader.name%=DriverInstall, USB\VID_2341&PID_024E
-%zero.sketch.name%=DriverInstall, USB\VID_2341&PID_824D&MI_00
-%zero.bootloader.name%=DriverInstall, USB\VID_2341&PID_024D
+%bossa.name%=DriverInstall, USB\VID_03EB&PID_6124
+%riotr34.sketch.name%=DriverInstall, USB\VID_04D8&PID_EC21&MI_00
+%riotr34.bootloader.name%=DriverInstall, USB\VID_04D8&PID_EC22
 
 [DeviceList.NTia64]
-%mkr1000.sketch.name%=DriverInstall, USB\VID_2341&PID_824E&MI_00
-%mkr1000.bootloader.name%=DriverInstall, USB\VID_2341&PID_024E
-%zero.sketch.name%=DriverInstall, USB\VID_2341&PID_824D&MI_00
-%zero.bootloader.name%=DriverInstall, USB\VID_2341&PID_024D
+%bossa.name%=DriverInstall, USB\VID_03EB&PID_6124
+%riotr34.sketch.name%=DriverInstall, USB\VID_04D8&PID_EC21&MI_00
+%riotr34.bootloader.name%=DriverInstall, USB\VID_04D8&PID_EC22
 
 [DriverInstall]
 include=mdmcpq.inf,usb.inf

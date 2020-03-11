@@ -28,8 +28,8 @@ riot_r34_edbg.upload.wait_for_upload_port=false
 riot_r34_edbg.upload.native_usb=false
 riot_r34_edbg.build.mcu=cortex-m0plus
 riot_r34_edbg.build.f_cpu=48000000L
-riot_r34_edbg.build.usb_product="Arduino Zero"
-riot_r34_edbg.build.usb_manufacturer="Arduino LLC"
+riot_r34_edbg.build.usb_product="Riot R34 Stamp"
+riot_r34_edbg.build.usb_manufacturer="Riot Network"
 riot_r34_edbg.build.board=SAMR_34
 riot_r34_edbg.build.core=arduino
 riot_r34_edbg.build.extra_flags=-D__SAMR34J18B__ {build.usb_flags}
@@ -37,34 +37,18 @@ riot_r34_edbg.build.ldscript=linker_scripts/gcc/flash_with_bootloader.ld
 riot_r34_edbg.build.openocdscript=openocd_scripts/riot_r34.cfg
 riot_r34_edbg.build.variant=riot_r34
 riot_r34_edbg.build.variant_system_lib=
-riot_r34_edbg.build.vid=0x2341
-riot_r34_edbg.build.pid=0x804d
+riot_r34_edbg.build.vid=0x04D8
+riot_r34_edbg.build.pid=0xEC22
 riot_r34_edbg.bootloader.tool=openocd
 riot_r34_edbg.bootloader.file=r34/samr34.bin
 
 # Riot R34 stamp (Native USB Port)
 # --------------------------------------
 riot_r34_native.name=Riot R34 stamp (Native USB Port)
-riot_r34_native.vid.0=0x2341
-riot_r34_native.pid.0=0x804d
-riot_r34_native.vid.1=0x2341
-riot_r34_native.pid.1=0x004d
-
-riot_r34_native.vid.2=0x2341
-riot_r34_native.pid.2=0x824d
-# If the board is a 2341:824d use 2341:824d for build and set other parameters as well
-riot_r34_native.vid.2.build.vid=0x2341
-riot_r34_native.vid.2.build.pid=0x824d
-riot_r34_native.vid.2.build.usb_product="Riot R34"
-riot_r34_native.vid.2.bootloader.file=r34/samr34.bin
-
-riot_r34_native.vid.3=0x2341
-riot_r34_native.pid.3=0x024d
-# If the board is a 2341:024d use 2341:824d for build and set other parameters as well
-riot_r34_native.vid.3.build.vid=0x2341
-riot_r34_native.vid.3.build.pid=0x824d
-riot_r34_native.vid.3.build.usb_product="Riot R34"
-riot_r34_native.vid.3.bootloader.file=r34/samr34.bin
+riot_r34_native.vid=0x04D8
+riot_r34_native.pid=0xEC22
+riot_r34_native.vid.build.usb_product="Riot R34"
+riot_r34_native.vid.bootloader.file=r34/samr34.bin
 
 riot_r34_native.upload.tool=bossac
 riot_r34_native.upload.protocol=sam-ba
