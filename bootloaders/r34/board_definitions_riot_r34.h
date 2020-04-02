@@ -21,12 +21,17 @@
 #define _BOARD_DEFINITIONS_H_
 /*
  * USB device definitions
+ 
+ Bootloader
+ VID: 0x04D8
+ PID: 0xEC09
+
  */
 #define STRING_PRODUCT "Riot R34 stamp"
 #define USB_VID_HIGH   0x04
 #define USB_VID_LOW    0xD8
 #define USB_PID_HIGH   0xEC
-#define USB_PID_LOW    0x21
+#define USB_PID_LOW    0x09
 
 /*
  * If BOOT_DOUBLE_TAP_ADDRESS is defined the bootloader is started by

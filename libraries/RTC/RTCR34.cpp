@@ -41,35 +41,21 @@ RTCR34::RTCR34()
 
 void RTCR34::begin(bool resetTime)
 {
-  
-    // make sure OSC32KCTRL has the 1.024kHz output enabled
+// make sure OSC32KCTRL has the 1.024kHz output enabled
 	config32kOSC();
-  // Setup clock MLCK and OSC32KCTRL for RTC
+// Setup clock MLCK and OSC32KCTRL for RTC
 	configureClock();
-
 // disable RTC before we change any settings
 	RTCdisable();
-
 // reset to have a known state
 	RTCreset();
-  
-//setup RTC in Mode 2 with 1.024kHz clock
-RTC_MODE2_CTRLA_Type tmp_reg;
-  tmp_reg.reg |= RTC_MODE2_CTRLA_MODE_CLOCK; // set clock operating mode
-  tmp_reg.reg |= RTC_MODE2_CTRLA_PRESCALER_DIV1024; // set prescaler to 1024 for MODE2
-  tmp_reg.reg &= ~RTC_MODE2_CTRLA_MATCHCLR; // disable clear on match
-  
-  //According to the datasheet RTC_MODE2_CTRL_CLKREP = 0 for 24h
-  tmp_reg.reg &= ~RTC_MODE2_CTRLA_CLKREP; // 24h time representation
-// enable clock sync ( read register )
-  tmp_reg.reg |= RTC_MODE2_CTRLA_CLOCKSYNC;
+	// disable RTC before we change any settings
+//	RTCdisable();
+	//setup RTC in Mode 2 with 1.024kHz clock
+	delay(1);
+	RTCsetMode();
 
-  RTC->MODE2.CTRLA.reg = tmp_reg.reg;
   
-  
-  while (RTCisSyncing())
-    ;
-
 // If the RTC is in clock mode and the reset was
   // not due to POR or BOD, preserve the clock time
   // POR causes a reset anyway, BOD behaviour is?
@@ -77,24 +63,25 @@ RTC_MODE2_CTRLA_Type tmp_reg;
   RTC_MODE2_CLOCK_Type oldTime;
 
   if ((!resetTime) && (RSTC->RCAUSE.reg & (RSTC_RCAUSE_SYST | RSTC_RCAUSE_WDT | RSTC_RCAUSE_EXT))) {
-    if (RTC->MODE2.CTRLA.reg & RTC_MODE2_CTRLA_MODE_CLOCK) {
+    if (RTC->MODE2.CTRLA.reg && RTC_MODE2_CTRLA_MODE_CLOCK) {
       validTime = true;
       oldTime.reg = RTC->MODE2.CLOCK.reg;
     }
   }
-
-  NVIC_EnableIRQ(RTC_IRQn); // enable RTC interrupt 
-  NVIC_SetPriority(RTC_IRQn, 0x00);
-
-  RTC->MODE2.INTENSET.reg |= RTC_MODE2_INTENSET_ALARM0; // enable alarm interrupt
-  RTC->MODE2.Mode2Alarm[0].MASK.bit.SEL = MATCH_OFF; // default alarm match is off (disabled)
+  RTC->MODE2.INTENSET.reg |= RTC_MODE2_INTENSET_ALARM0; // enable alarm interrupt on RTC
   
-  while (RTCisSyncing())
-    ;
+  NVIC_EnableIRQ(RTC_IRQn); // enable RTC interrupt in NVIC
+  NVIC_SetPriority(RTC_IRQn, 0x00);
+ 
+
+  RTC->MODE2.Mode2Alarm[0].MASK.bit.SEL = MATCH_OFF; // default alarm match is off (disabled)
+	while (RTCisSyncing())
+	;
 
   RTCenable();
-  RTCresetRemove();
 
+	while (RTCisSyncing())
+	;
   // If desired and valid, restore the time value, else use first valid time value
   if ((!resetTime) && (validTime) && (oldTime.reg != 0L)) {
     RTC->MODE2.CLOCK.reg = oldTime.reg;
@@ -106,7 +93,7 @@ RTC_MODE2_CTRLA_Type tmp_reg;
   }
   while (RTCisSyncing())
     ;
-
+RTC->MODE2.INTFLAG.reg = ~RTC_MODE2_INTFLAG_RESETVALUE; // clear all flags
   _configured = true;
 }
 
@@ -489,34 +476,15 @@ inline void RTCR34::RTCreadRequest() {
 /* Wait for sync in write operations */
 inline bool RTCR34::RTCisSyncing()
 {
-  return (RTC->MODE2.SYNCBUSY.reg > 0 ); //Synchronization Busy in Clock/Calendar mode ( all bits 0 means regs are synced)
+  return (RTC->MODE2.SYNCBUSY.reg && RTC_MODE2_SYNCBUSY_MASK_) ; //Synchronization Busy in Clock/Calendar mode ( all bits 0 means regs are synced)
 }
 
 void RTCR34::RTCdisable()
-{
+{  
+	while (RTCisSyncing())
+    ;
   RTC->MODE2.CTRLA.reg &= ~RTC_MODE2_CTRLA_ENABLE; // disable RTC
-  while (RTCisSyncing())
-    ;
-}
-
-void RTCR34::RTCenable()
-{
-  RTC->MODE2.CTRLA.reg |= RTC_MODE2_CTRLA_ENABLE; // enable RTC
-  while (RTCisSyncing())
-    ;
-}
-
-void RTCR34::RTCreset()
-{
-  RTC->MODE2.CTRLA.reg |= RTC_MODE2_CTRLA_SWRST; // software reset
-  while (RTCisSyncing())
-    ;
-}
-
-void RTCR34::RTCresetRemove()
-{
-  RTC->MODE2.CTRLA.reg &= ~RTC_MODE2_CTRLA_SWRST; // software reset remove
-  while (RTCisSyncing())
+	while (RTCisSyncing())
     ;
 }
 
@@ -551,3 +519,46 @@ void RTCR34::RTCresetRemove()
         va_end(list);
     }
 */
+void RTCR34::RTCsetMode()
+{
+	
+	volatile RTC_MODE2_CTRLA_Type tmp_reg;
+	tmp_reg.reg = 0;
+	
+		tmp_reg.reg |= RTC_MODE2_CTRLA_MODE_CLOCK; // set clock operating mode
+		tmp_reg.reg |= RTC_MODE2_CTRLA_PRESCALER_DIV1024; // set prescaler to 1024 for MODE2
+		tmp_reg.reg &= ~RTC_MODE2_CTRLA_MATCHCLR; // disable clear on match
+		//According to the datasheet RTC_MODE2_CTRL_CLKREP = 0 for 24h
+		tmp_reg.reg &= ~RTC_MODE2_CTRLA_CLKREP; // 24h time representation
+		// enable clock sync ( read register )
+		tmp_reg.reg |= RTC_MODE2_CTRLA_CLOCKSYNC;
+	while (RTCisSyncing())
+    ;
+	RTC->MODE2.CTRLA.reg = tmp_reg.reg;
+	while (RTCisSyncing())
+    ;
+
+}
+
+void RTCR34::RTCenable()
+{
+	while (RTC->MODE2.SYNCBUSY.bit.ENABLE)
+    ;
+  RTC->MODE2.CTRLA.reg |= RTC_MODE2_CTRLA_ENABLE; // enable RTC
+  while (RTC->MODE2.SYNCBUSY.bit.ENABLE)
+    ;
+}
+
+void RTCR34::RTCreset()
+{
+  RTC->MODE2.CTRLA.reg |= RTC_MODE2_CTRLA_SWRST; // software reset
+  while (RTCisSyncing())
+    ;
+}
+
+void RTCR34::RTCresetRemove()
+{
+  RTC->MODE2.CTRLA.reg &= ~RTC_MODE2_CTRLA_SWRST; // software reset remove
+  while (RTCisSyncing())
+    ;
+}

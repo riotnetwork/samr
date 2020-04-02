@@ -108,6 +108,7 @@ private:
   void configureClock(void);
   void RTCreadRequest();
   bool RTCisSyncing(void);
+  void RTCsetMode(void);
   void RTCdisable();
   void RTCenable();
   void RTCreset();

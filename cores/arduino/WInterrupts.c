@@ -38,15 +38,15 @@ static void __initialize()
   NVIC_SetPriority(EIC_IRQn, 0);
   NVIC_EnableIRQ(EIC_IRQn);
 
-  // Enable GCLK for IEC (External Interrupt Controller)
-  GCLK->PCHCTRL[GCM_EIC].reg = ( GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0 );
+  // Enable GCLK for IEC (External Interrupt Controller), uses XOSC32k clock, will switch over to 32k ULP when we go to low power
+  GCLK->PCHCTRL[GCM_EIC].reg = ( GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0 ); // might not be needed as we use ulp32k as scource
 
 /* Shall we do that?
   // Do a software reset on EIC
   EIC->CTRLA.SWRST.bit = 1 ;
   while ((EIC->CTRLA.SWRST.bit == 1) && (EIC->STATUS.SYNCBUSY.bit == 1)) { }
 */
-
+ EIC->CTRLA.bit.CKSEL = 1; // use ULP32k as source
   // Enable EIC
   EIC->CTRLA.bit.ENABLE = 1;
   while (EIC->SYNCBUSY.bit.ENABLE == 1) { /*wait for sync*/ }
@@ -112,7 +112,8 @@ void attachInterrupt(uint32_t pin, voidFuncPtr callback, uint32_t mode)
       config = 0;
       pos = in << 2;
     }
-
+ EIC->CTRLA.bit.ENABLE = 0; //Config registers are Enable locked ( disable EIC to write them )
+ while (EIC->SYNCBUSY.bit.ENABLE == 1) { /*wait for sync*/ }
     // Configure the interrupt mode
     EIC->CONFIG[config].reg &=~ (EIC_CONFIG_SENSE0_Msk << pos); // Reset sense mode, important when changing trigger mode during runtime
     switch (mode)
@@ -138,6 +139,8 @@ void attachInterrupt(uint32_t pin, voidFuncPtr callback, uint32_t mode)
         break;
     }
   }
+   EIC->CTRLA.bit.ENABLE = 1; //Config registers are Enable locked ( disable EIC to write them )
+ while (EIC->SYNCBUSY.bit.ENABLE == 1) { /*wait for sync*/ }
   // Enable the interrupt
   EIC->INTENSET.reg = EIC_INTENSET_EXTINT(inMask);
 }

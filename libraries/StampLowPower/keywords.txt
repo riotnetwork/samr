@@ -1,0 +1,18 @@
+#######################################
+# Syntax Coloring Map LowPower
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+LowPower KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+idle			KEYWORD2
+sleep	 		KEYWORD2
+deepSleep		KEYWORD2
+attachInterruptWakeup	KEYWORD2
+setAlarmIn		KEYWORD2

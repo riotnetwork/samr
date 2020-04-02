@@ -29,6 +29,7 @@
 DriverPackageDisplayName="Riot USB Driver (for SAMR boards)"
 ManufacturerName="Riot Network (www.riot.network)"
 ServiceName="USB RS-232 Emulation Driver"
+bossa.name="Bossa Program Port"
 riotr34.sketch.name="Riot R34 Stamp"
 riotr34.bootloader.name="Riot R34 Stamp bootloader"
 
@@ -58,7 +59,7 @@ DefaultDestDir=12
 
 [DeviceList.NTamd64]
 %riotr34.sketch.name%=DriverInstall, USB\VID_04D8&PID_EC22&MI_00
-%riotr34.bootloader.name%=DriverInstall, USB\VID_04D8&PID_EC09
+%riotr34.bootloader.name%=DriverInstall, USB\VID_04D8&PID_EC09s
 
 [DeviceList.NTia64]
 %riotr34.sketch.name%=DriverInstall, USB\VID_04D8&PID_EC22&MI_00
