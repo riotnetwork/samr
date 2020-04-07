@@ -1,13 +1,51 @@
-#if defined(ARDUINO_ARCH_SAMR)
+//#if defined(ARDUINO_ARCH_SAMR)
 
 #include "StampLowPower.h"
 #include "WInterrupts.h"
+
 
 void StampLowPower::idle() {
 	SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
 	PM->SLEEPCFG.reg = PM_SLEEPCFG_SLEEPMODE_IDLE;
 	__DSB();
 	__WFI();
+}
+
+/*Peripherals with RUNSTANDBY bit set in their CTRLA register will continue to run if their corresponong clock is also set as RUNSTANBY*/
+void StampLowPower::standby() {
+	SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
+	PM->SLEEPCFG.reg = PM_SLEEPCFG_SLEEPMODE_STANDBY;
+	__DSB();
+	__WFI();
+}
+
+/*2.3 BackupImportant:  Backup mode is not supported on SAM L10, SAM L11 series devices.
+In Backup (BACKUP) Sleep mode only the backup domain is powered and only registers in this domainwill hold their value
+Wakeup from BACKUP will be similarto a device start-up after reset
+*/
+void StampLowPower::backup() {
+	SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
+	PM->SLEEPCFG.reg = PM_SLEEPCFG_SLEEPMODE_BACKUP;
+	__DSB();
+	__WFI();
+}
+
+void StampLowPower::setSleepMode( sleepModes_e sleepMode) {
+	switch (sleepMode)
+	{
+	case SLEEP_IDLE :
+		PM->SLEEPCFG.reg = PM_SLEEPCFG_SLEEPMODE_IDLE;
+		break;
+	case SLEEP_STANDBY :
+		PM->SLEEPCFG.reg = PM_SLEEPCFG_SLEEPMODE_STANDBY;
+		break;
+	case SLEEP_BACKUP :
+		PM->SLEEPCFG.reg = PM_SLEEPCFG_SLEEPMODE_BACKUP;
+		break;
+	default:
+		break;
+	}
+//	SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
 }
 
 void StampLowPower::idle(uint32_t millis) {
@@ -56,7 +94,7 @@ void StampLowPower::setAlarmIn(uint32_t millis) {
 
 	uint32_t now = rtc.getEpoch();
 	rtc.setAlarmEpoch(now + millis/1000);
-	rtc.enableAlarm(rtc.MATCH_HHMMSS);
+	rtc.enableAlarm(rtc.MATCH_YYMMDDHHMMSS);
 }
 
 void StampLowPower::attachInterruptWakeup(uint32_t pin, voidFuncPtr callback, uint32_t mode) {
@@ -76,6 +114,10 @@ void StampLowPower::attachInterruptWakeup(uint32_t pin, voidFuncPtr callback, ui
 	EExt_Interrupts in = g_APinDescription[pin].ulExtInt;
 	if (in == NOT_AN_INTERRUPT || in == EXTERNAL_INT_NMI)
     		return;
+
+	//pinMode(pin, INPUT_PULLUP);
+	attachInterrupt(pin, callback, mode);
+
 	// enable EIC clock to use ULP 32k instead of FLL
 	GCLK_GENCTRL_Type gclkConfig;
 	/* Configure GCLK generator 6
@@ -101,8 +143,7 @@ void StampLowPower::attachInterruptWakeup(uint32_t pin, voidFuncPtr callback, ui
 	GCLK->GENCTRL[6].reg |= GCLK_GENCTRL_GENEN;
 
 
-	//pinMode(pin, INPUT_PULLUP);
-	attachInterrupt(pin, callback, mode);
+	
 		
 	//Put Generic Clock Generator 6 (ULP32k) as source for Peripheral channel 3 (EIC)
 	GCLK->PCHCTRL[GCM_EIC].reg = (GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK6);
@@ -117,4 +158,4 @@ void StampLowPower::attachInterruptWakeup(uint32_t pin, voidFuncPtr callback, ui
 
 StampLowPower LowPower;
 
-#endif // ARDUINO_ARCH_SAMR
+//#endif // ARDUINO_ARCH_SAMR

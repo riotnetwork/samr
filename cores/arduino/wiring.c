@@ -17,7 +17,7 @@
 */
 
 #include "Arduino.h"
-
+#define VERY_LOW_POWER
 #ifdef __cplusplus
 extern "C" {
 #endif
