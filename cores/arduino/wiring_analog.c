@@ -150,6 +150,7 @@ uint32_t analogRead(uint32_t pin)
    * Before enabling the ADC, the asynchronous clock source must be selected and enabled, and the ADC reference must be
    * configured. The first conversion after the reference is changed must not be used.
    */
+  ADC->CTRLA.bit.ONDEMAND = 1;
   ADC->CTRLA.bit.ENABLE = 0x01;             // Enable ADC
 
   // Start conversion
@@ -253,6 +254,7 @@ void analogWrite(uint32_t pin, uint32_t value)
         TCx->COUNT16.CTRLA.bit.ENABLE = 0;
         syncTC_16(TCx);
         // Set Timer counter Mode to 16 bits, normal PWM
+		TCx->COUNT16.CTRLA.bit.ONDEMAND = 1;
         TCx->COUNT16.CTRLA.reg |= TC_CTRLA_MODE_COUNT16;
 		TCx->COUNT16.WAVE.reg = TC_WAVE_WAVEGEN_NPWM; // set to normal PWM mode
         syncTC_16(TCx);

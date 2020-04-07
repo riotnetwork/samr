@@ -65,7 +65,7 @@ void SystemInit( void )
 	/*  Switch to PL2 to be sure configuration of GCLK0 is safe */
 	/* Clear performance level status */
 	PM->INTFLAG.reg = PM_INTFLAG_PLRDY;
-	/* Switch performance level */
+	/* Switch performance level to PL2 - Highest performance */
 	PM->PLCFG.reg = PM_PLCFG_PLSEL_PL2_Val;
 	/* Waiting performance level ready */
 	while (!PM->INTFLAG.reg) {
@@ -76,14 +76,14 @@ void SystemInit( void )
 	OSC32KCTRL_XOSC32K_Type temp = OSC32KCTRL->XOSC32K;
 	/** Wait 65536 clock cycles until the clock source is considered stable */
 	 temp.bit.STARTUP = 4; 
-	 // always run the clock
+	 // run the clock, except in Standby mode
 	 temp.bit.ONDEMAND = 0;
 	 // its a crystal, not a clock input
 	 temp.bit.XTALEN = 1;
 	 // enable 32k output 
 	 temp.bit.EN32K = 1;
     // run xtal in standby 
-	 temp.bit.RUNSTDBY = 1;
+	 temp.bit.RUNSTDBY = 0;
 	 // commit changes
 	OSC32KCTRL->XOSC32K.reg = temp.reg;
 	
@@ -136,7 +136,7 @@ void SystemInit( void )
 	dfllCtrl.bit.STABLE = 0;/** Keep tracking after the DFLL has gotten a fine lock */
 	dfllCtrl.bit.QLDIS = 0;/** Enable the QuickLock feature for looser lock requirements on the DFLL */
 	dfllCtrl.bit.CCDIS = 0;/** Enable a chill cycle, where the DFLL output frequency is not measured */
-	dfllCtrl.bit.ONDEMAND = 0; /** Disable on demand mode */
+	dfllCtrl.bit.ONDEMAND = 0; /** disable on demand mode*/
 	dfllCtrl.bit.RUNSTDBY = 0; /** Do not run in standby */
  //   OSCCTRL->DFLLCTRL.reg = dfllCtrl.reg;
 	
@@ -267,6 +267,8 @@ void SystemInit( void )
 	while (!(OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY)) {
 		/* Wait for DFLL sync */
 	}
+	
+	OSCCTRL->DFLLCTRL.bit.ONDEMAND = 1;
 /* Enable generator 0 as it depends on other generators*/
 /* Configure GCLK generator 0 (Main Clock)
 * run in standby : false
@@ -301,7 +303,7 @@ GCLK->GENCTRL[0].reg |= GCLK_GENCTRL_GENEN;
   uint32_t linearity = (*((uint32_t *) ADC_FUSES_BIASREFBUF_ADDR) & ADC_FUSES_BIASREFBUF_Msk) >> ADC_FUSES_BIASREFBUF_Pos;
   
   ADC->CALIB.reg = ADC_CALIB_BIASCOMP(bias) | ADC_CALIB_BIASREFBUF(linearity);
-
+  ADC->CTRLA.bit.ONDEMAND = 1;
   /*
    * 9) Disable automatic NVM write operations
    */
