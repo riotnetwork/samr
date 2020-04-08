@@ -21,6 +21,7 @@
 #define RTC_R34_H
 
 #include "Arduino.h"
+#include <stdarg.h>
 
 typedef void(*voidFuncPtr)(void);
 
@@ -100,6 +101,10 @@ public:
   bool isConfigured() {
     return _configured;
   }
+  
+    /* RTC RAM backup*/
+   void setBackup(int n_values, ...);
+   void getBackup(int n_values, ...);
 
 private:
   bool _configured;

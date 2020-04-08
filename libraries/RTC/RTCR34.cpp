@@ -488,8 +488,13 @@ void RTCR34::RTCdisable()
     ;
 }
 
-/*
-  void set_backup(int n_values, ...)
+ /*
+        Store max uint32[ 4 ] values to rtc ram
+        rtc.set_backup(1, val_1);
+          ...
+        rtc.set_backup(4, val_1, val_2, val_3, val_4);
+    */
+  void RTCR34::setBackup(int n_values, ...)
     {
         n_values &= 3;
         va_list list;
@@ -500,12 +505,13 @@ void RTCR34::RTCdisable()
     }
 
     
-      //  Restore max uint32[ 4 ] values from rtc ram
-   //     rtc.get_backup(1, &val_1);
-   //       ...
-    //    rtc.get_backup(4, &val_1, &val_2, &val_3, &val_4);
+      /* Restore max uint32[ 4 ] values from rtc ram
+        rtc.get_backup(1, &val_1);
+          ...
+        rtc.get_backup(4, &val_1, &val_2, &val_3, &val_4);
+	*/
    
-    void get_backup(int n_values, ...)
+    void RTCR34::getBackup(int n_values, ...)
     {
         n_values &= 3;
         va_list list;
@@ -518,7 +524,7 @@ void RTCR34::RTCdisable()
         }
         va_end(list);
     }
-*/
+
 void RTCR34::RTCsetMode()
 {
 	
