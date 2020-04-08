@@ -35,12 +35,15 @@ void StampLowPower::setSleepMode( sleepModes_e sleepMode) {
 	{
 	case SLEEP_IDLE :
 		PM->SLEEPCFG.reg = PM_SLEEPCFG_SLEEPMODE_IDLE;
+		while (PM->SLEEPCFG.bit.SLEEPMODE != PM_SLEEPCFG_SLEEPMODE_IDLE);
 		break;
 	case SLEEP_STANDBY :
 		PM->SLEEPCFG.reg = PM_SLEEPCFG_SLEEPMODE_STANDBY;
+		while (PM->SLEEPCFG.bit.SLEEPMODE != PM_SLEEPCFG_SLEEPMODE_STANDBY);
 		break;
 	case SLEEP_BACKUP :
 		PM->SLEEPCFG.reg = PM_SLEEPCFG_SLEEPMODE_BACKUP;
+		while (PM->SLEEPCFG.bit.SLEEPMODE != PM_SLEEPCFG_SLEEPMODE_BACKUP);
 		break;
 	default:
 		break;
@@ -54,7 +57,7 @@ void StampLowPower::idle(uint32_t millis) {
 }
 
 void StampLowPower::sleep() {
-	bool restoreUSBDevice = false;
+bool restoreUSBDevice = false;
 	if (SERIAL_PORT_USBVIRTUAL) {
 		USBDevice.standby();
 	} else {
@@ -63,13 +66,17 @@ void StampLowPower::sleep() {
 	}
 	// Disable systick interrupt:  See https://www.avrfreaks.net/forum/samd21-samd21e16b-sporadically-locks-and-does-not-wake-standby-sleep-mode
 	SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;	
+	__disable_irq();
 	SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
 	__DSB();
 	__WFI();
+	// sleeping here, will wake from here ( except from OFF or Backup modes, those look like POR )
 	// Enable systick interrupt
+	__enable_irq();
 	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;	
 	if (restoreUSBDevice) {
 		USBDevice.attach();
+		
 	}
 }
 
@@ -151,9 +158,10 @@ void StampLowPower::attachInterruptWakeup(uint32_t pin, voidFuncPtr callback, ui
 	// Enable wakeup capability on pin in case being used during sleep
 	// EIC->INTENSET.reg |= (1 << in);
 
-	/* Errata: Make sure that the Flash does not power all the way down
+		/* Errata: Make sure that the Flash does not power all the way down
      	* when in sleep mode. */
-	NVMCTRL->CTRLB.bit.SLEEPPRM = NVMCTRL_CTRLB_SLEEPPRM_DISABLED_Val;
+ 	// NVMCTRL->CTRLB.bit.SLEEPPRM = NVMCTRL_CTRLB_SLEEPPRM_DISABLED_Val;
+	 NVMCTRL->CTRLB.bit.SLEEPPRM =  NVMCTRL_CTRLB_SLEEPPRM_WAKEUPINSTANT_Val;
 }
 
 StampLowPower LowPower;
