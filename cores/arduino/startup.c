@@ -86,16 +86,13 @@ void SystemInit( void )
 	 temp.bit.RUNSTDBY = 0;
 	 // commit changes
 	OSC32KCTRL->XOSC32K.reg = temp.reg;
-	
 	// enable xosc32k clock
 	OSC32KCTRL->XOSC32K.reg |= OSC32KCTRL_XOSC32K_ENABLE;
 	 // wait for clock to become ready
 	while ( (OSC32KCTRL->STATUS.reg & OSC32KCTRL_STATUS_XOSC32KRDY) == 0 );
-
+	
+	
 // init DFLL
-// wait for dfll register to be ready before we write to it
-	while ( ( OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0 );
-
 	/* Using DFLL48M COARSE CAL value from NVM Software Calibration Area Mapping 
 	   in DFLL.COARSE helps to output a frequency close to 48 MHz.*/
 #define NVM_DFLL_COARSE_POS    26 /* DFLL48M Coarse calibration value bit position.*/
@@ -110,48 +107,7 @@ void SystemInit( void )
 		coarse = 0x1f;
 	}
 	
-
-	// system_clock_source_dfll_set_config_errata_9905;
-/* Disable ONDEMAND mode while writing configurations */
-		
-	
-	
-	OSCCTRL->DFLLCTRL.bit.ONDEMAND = 0;
-	OSCCTRL->DFLLCTRL.bit.ENABLE = 1;
-	// wait for dfll register to be ready before we write to it
-	while ( ( OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0 );
-
-	OSCCTRL_DFLLMUL_Type dfllMul = OSCCTRL->DFLLMUL;
-	dfllMul.bit.CSTEP = (0x1f / 4); //MAX_COARSE_STEP_SIZE
-	dfllMul.bit.FSTEP = (0xff / 4); //MAX_FINE_STEP_SIZE
-	dfllMul.bit.MUL	 = (48000000 / 32768); // MULTIPLY_FACTOR
-//	OSCCTRL->DFLLMUL.reg = dfllMul.reg;
-
-	// wait for dfll register to be ready before we write to it
-//	while ((OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0);
-	
-	OSCCTRL_DFLLCTRL_Type dfllCtrl = OSCCTRL->DFLLCTRL;
-	dfllCtrl.bit.MODE = 1; // closed loop mode
-	dfllCtrl.bit.LLAW = 0;  /** Keep DFLL lock when the device wakes from sleep */
-	dfllCtrl.bit.STABLE = 0;/** Keep tracking after the DFLL has gotten a fine lock */
-	dfllCtrl.bit.QLDIS = 0;/** Enable the QuickLock feature for looser lock requirements on the DFLL */
-	dfllCtrl.bit.CCDIS = 0;/** Enable a chill cycle, where the DFLL output frequency is not measured */
-	dfllCtrl.bit.ONDEMAND = 0; /** disable on demand mode*/
-	dfllCtrl.bit.RUNSTDBY = 0; /** Do not run in standby */
- //   OSCCTRL->DFLLCTRL.reg = dfllCtrl.reg;
-	
-	// wait for dfll register to be ready before we write to it
-//	while ( ( OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0 );
-	
-	OSCCTRL_DFLLVAL_Type dfllval = OSCCTRL->DFLLVAL;
-	dfllval.bit.COARSE = coarse; /** Coarse calibration value (closed loop mode) */
-	dfllval.bit.FINE = 0xff / 4; /* Midpoint fine calibration value (closed loop mode) */
-//	OSCCTRL->DFLLVAL= dfllval;
-	
-	// clock not enabled yet
-	//
-
-// init GCLK (0,1,2,3)
+// init GCLK (0,1)
 /* Turn on the digital interface clock */
 	MCLK->APBAMASK.reg |= MCLK_APBAMASK_GCLK;
 /* Software reset the module to ensure it is re-initialized correctly */
@@ -164,67 +120,27 @@ void SystemInit( void )
 
 	GCLK_GENCTRL_Type gclkConfig;
 /* Configure GCLK generator 1  ( hw timer )
-* run in standby : 1
-* source : GCLK_SOURCE_XOSC32K
+* run in standby : 0
+* source : GCLK_GENCTRL_SRC_XOSC32K - more stable then ULP32k
 * prescaler ( division factor ) : 1
 * output enable : 0
 */
 	gclkConfig.reg = 0;
 	gclkConfig.reg = GCLK->GENCTRL[1].reg;
 	gclkConfig.bit.DIV = 1;
-	gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_XOSC32K_Val;
+	gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_XOSC32K_Val; // apparently more stable than ULP32k ( for the DFLL48 )
 	gclkConfig.bit.OE = 0;
 	gclkConfig.bit.RUNSTDBY = 0;
-
 	GCLK->GENCTRL[1].reg = gclkConfig.reg;
 	/* Enable generator */
 	gclk_gen_sync(1);
 	GCLK->GENCTRL[1].reg |= GCLK_GENCTRL_GENEN;
 
-/* Configure GCLK generator 2 ( adc )
-* run in standby : 0
-* source : GCLK_SOURCE_OSC16M
-* prescaler ( division factor ) : 5 ( use improved dutycycle mode )
-* output enable : 0
-*/
-	gclkConfig.reg = 0;
-	gclkConfig.reg = GCLK->GENCTRL[2].reg;
-	gclkConfig.bit.DIV = 5;
-	gclkConfig.bit.IDC = 1;
-	gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_OSC16M_Val;
-	gclkConfig.bit.OE = 0;
-	gclkConfig.bit.RUNSTDBY = 0;
-
-	GCLK->GENCTRL[2].reg = gclkConfig.reg;
-	/* Enable generator */
-	gclk_gen_sync(2);
-	GCLK->GENCTRL[2].reg |= GCLK_GENCTRL_GENEN;
-
-/* Configure GCLK generator 3
-* run in standby : 0
-* source : GCLK_SOURCE_DFLL48M
-* prescaler : 1
-* output enable : 0
-*/
-	gclkConfig.reg = 0;
-	gclkConfig.reg = GCLK->GENCTRL[3].reg;
-	gclkConfig.bit.DIV = 1;
-	gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_DFLL48M_Val;
-	gclkConfig.bit.OE = 0;
-	gclkConfig.bit.RUNSTDBY = 0;
-
-	GCLK->GENCTRL[3].reg = gclkConfig.reg;
-	/* Enable generator */
-	gclk_gen_sync(3);
-	GCLK->GENCTRL[3].reg |= GCLK_GENCTRL_GENEN;
-	
-
-
 /* Enable DFLL reference clock in closed loop mode */
 /* Disable the peripheral channel */
 	GCLK->PCHCTRL[OSCCTRL_GCLK_ID_DFLL48].reg &= ~GCLK_PCHCTRL_CHEN;
 /* Configure the peripheral channel */
-	GCLK->PCHCTRL[OSCCTRL_GCLK_ID_DFLL48].reg = GCLK_PCHCTRL_GEN(1); // Generator 1 is the source ( xosc32k )
+	GCLK->PCHCTRL[OSCCTRL_GCLK_ID_DFLL48].reg = GCLK_PCHCTRL_GEN(1); // Generator 1 is the source ( 32k )
 	/* Enable the peripheral channel */
 	GCLK->PCHCTRL[OSCCTRL_GCLK_ID_DFLL48].reg |= GCLK_PCHCTRL_CHEN;
 	
@@ -235,15 +151,39 @@ void SystemInit( void )
 /* DFLL Enable (Open and Closed Loop) */
 // system_clock_source_dfll_set_config_errata_9905;
 /* Disable ONDEMAND mode while writing configurations */
+	while ( ( OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0 );
+	OSCCTRL->DFLLCTRL.bit.ONDEMAND = 0;
+	OSCCTRL->DFLLCTRL.bit.ENABLE = 0;
+	// wait for dfll register to be ready before we write to it
+	while ( ( OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0 );
+
+	OSCCTRL_DFLLMUL_Type dfllMul = OSCCTRL->DFLLMUL;
+	dfllMul.bit.CSTEP = (0x1f / 4); //MAX_COARSE_STEP_SIZE
+	dfllMul.bit.FSTEP = (0xff / 4); //MAX_FINE_STEP_SIZE
+	dfllMul.bit.MUL	 = (VARIANT_MCK / 32768); // MULTIPLY_FACTOR
+
+	OSCCTRL_DFLLCTRL_Type dfllCtrl = OSCCTRL->DFLLCTRL;
+	dfllCtrl.bit.MODE = 1; // closed loop mode
+	dfllCtrl.bit.LLAW = 0;  /** low power, we re-aquire lock after wake */ // low power, we re-aquire lock after wake
+	dfllCtrl.bit.STABLE = 0;/** Keep tracking after the DFLL has gotten a fine lock */
+	dfllCtrl.bit.QLDIS = 0;/** Enable the QuickLock feature for looser lock requirements on the DFLL */
+	dfllCtrl.bit.CCDIS = 0;/** Enable a chill cycle, where the DFLL output frequency is not measured */
+	dfllCtrl.bit.ONDEMAND = 0; /** disable on demand mode*/
+	dfllCtrl.bit.RUNSTDBY = 0; /** Do not run in standby */
+	dfllCtrl.bit.ENABLE = 1; // set enable bit
+	
+	OSCCTRL_DFLLVAL_Type dfllval = OSCCTRL->DFLLVAL;
+	dfllval.bit.COARSE = coarse; /** Coarse calibration value (closed loop mode) */
+	dfllval.bit.FINE = 0xff / 4; /* Midpoint fine calibration value (closed loop mode) */
+	// clock not enabled yet
+	//
 		
 	// wait for dfll register to be ready before we write to it
 	while ( ( OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY) == 0 );
 	
 	OSCCTRL->DFLLCTRL.bit.ONDEMAND = 0;
 	OSCCTRL->DFLLCTRL.bit.ENABLE = 1;
-	dfllCtrl.bit.ENABLE = 1; // set enable bit
-	//
-	
+
 	OSCCTRL->DFLLMUL.reg = 0;
 	OSCCTRL->DFLLVAL.reg = 0;
 	// wait for dfll register to be ready before we write to it
@@ -268,7 +208,6 @@ void SystemInit( void )
 		/* Wait for DFLL sync */
 	}
 	
-	OSCCTRL->DFLLCTRL.bit.ONDEMAND = 1;
 /* Enable generator 0 as it depends on other generators*/
 /* Configure GCLK generator 0 (Main Clock)
 * run in standby : false
@@ -285,6 +224,19 @@ gclkConfig.bit.RUNSTDBY = 0;
 GCLK->GENCTRL[0].reg = gclkConfig.reg;
 gclk_gen_sync(0);
 GCLK->GENCTRL[0].reg |= GCLK_GENCTRL_GENEN;
+
+//OSC32KCTRL->XOSC32K.bit.ONDEMAND = 1; // enable xosc32k to be ondemand
+//
+//prepare OSC16M to always run in 4MHz mode
+// going to use it when we go to sleep
+	
+	OSCCTRL->OSC16MCTRL.bit.ENABLE= 0 ;
+	OSCCTRL->OSC16MCTRL.bit.FSEL= OSCCTRL_OSC16MCTRL_FSEL_4_Val ;
+	OSCCTRL->OSC16MCTRL.bit.RUNSTDBY = 1;
+	OSCCTRL->OSC16MCTRL.bit.ONDEMAND = 0;
+	
+	OSCCTRL->OSC16MCTRL.reg |= OSCCTRL_OSC16MCTRL_ENABLE;
+	
 	/* CPU and BUS clocks */
 	MCLK->BUPDIV.reg = MCLK_BUPDIV_BUPDIV_DIV1;/** Divide Main clock by one */
 	MCLK->LPDIV.reg = MCLK_LPDIV_LPDIV_DIV1; /** Divide low power clock by 1*/

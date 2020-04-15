@@ -125,8 +125,8 @@ void loop( void ) ;
 #endif
 
 // Allows publishing the Beta core under samd-beta / arduino organization
-#ifndef ARDUINO_ARCH_SAMD
-#define ARDUINO_ARCH_SAMD
+#ifndef ARDUINO_ARCH_SAMR
+#define ARDUINO_ARCH_SAMR
 #endif
 
 // USB Device

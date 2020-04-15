@@ -296,7 +296,9 @@ void USBDeviceClass::init()
 
 	usbd.calibrate();
 	usbd.setUSBDeviceMode();
-	usbd.runInStandby();
+	//usbd.runInStandby();
+	 usbd.noRunInStandby(); // don't run in standby mode
+	
 	//usbd.setLowSpeed();
 	usbd.setFullSpeed();
 

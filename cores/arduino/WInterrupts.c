@@ -48,7 +48,7 @@ static void __initialize()
 */
  EIC->CTRLA.bit.CKSEL = 1; // use ULP32k as source
   // Enable EIC
-  EIC->CTRLA.bit.ENABLE = 1;
+ EIC->CTRLA.bit.ENABLE = 1;
   while (EIC->SYNCBUSY.bit.ENABLE == 1) { /*wait for sync*/ }
 }
 

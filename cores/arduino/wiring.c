@@ -17,7 +17,9 @@
 */
 
 #include "Arduino.h"
+
 #define VERY_LOW_POWER
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -82,8 +84,6 @@ void init( void )
 
 // Defining VERY_LOW_POWER breaks Arduino APIs since all pins are considered INPUT at startup
 // However, it really lowers the power consumption by a factor of 20 in low power mode (0.03mA vs 0.6mA)
-// retain all IO configurations upon wakeup
-//	PM->CTRLA.reg = PM_CTRLA_IORET;
 #ifndef VERY_LOW_POWER
   // Setup all pins (digital and analog) in INPUT mode (default is nothing)
   for (uint32_t ul = 0 ; ul < NUM_DIGITAL_PINS ; ul++ )

@@ -37,7 +37,7 @@
 #define SPI_MODE2 0x03
 #define SPI_MODE3 0x01
 
-#if defined(ARDUINO_ARCH_SAMD)
+#if defined(ARDUINO_ARCH_SAMR)
   // The datasheet specifies a typical SPI SCK period (tSCK) of 42 ns,
   // see "Table 36-48. SPI Timing Characteristics and Requirements",
   // which translates into a maximum SPI clock of 23.8 MHz.

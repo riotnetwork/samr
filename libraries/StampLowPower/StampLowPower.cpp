@@ -1,8 +1,7 @@
-//#if defined(ARDUINO_ARCH_SAMR)
+#if defined(ARDUINO_ARCH_SAMR)
 
 #include "StampLowPower.h"
 #include "WInterrupts.h"
-
 
 void StampLowPower::idle() {
 	SCB->SCR &= ~SCB_SCR_SLEEPDEEP_Msk;
@@ -35,20 +34,17 @@ void StampLowPower::setSleepMode( sleepModes_e sleepMode) {
 	{
 	case SLEEP_IDLE :
 		PM->SLEEPCFG.reg = PM_SLEEPCFG_SLEEPMODE_IDLE;
-		while (PM->SLEEPCFG.bit.SLEEPMODE != PM_SLEEPCFG_SLEEPMODE_IDLE);
 		break;
 	case SLEEP_STANDBY :
 		PM->SLEEPCFG.reg = PM_SLEEPCFG_SLEEPMODE_STANDBY;
-		while (PM->SLEEPCFG.bit.SLEEPMODE != PM_SLEEPCFG_SLEEPMODE_STANDBY);
 		break;
 	case SLEEP_BACKUP :
 		PM->SLEEPCFG.reg = PM_SLEEPCFG_SLEEPMODE_BACKUP;
-		while (PM->SLEEPCFG.bit.SLEEPMODE != PM_SLEEPCFG_SLEEPMODE_BACKUP);
 		break;
 	default:
 		break;
 	}
-//	SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+	SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
 }
 
 void StampLowPower::idle(uint32_t millis) {
@@ -57,26 +53,80 @@ void StampLowPower::idle(uint32_t millis) {
 }
 
 void StampLowPower::sleep() {
-bool restoreUSBDevice = false;
+	bool restoreUSBDevice = false;
 	if (SERIAL_PORT_USBVIRTUAL) {
 		USBDevice.standby();
 	} else {
 		USBDevice.detach();
 		restoreUSBDevice = true;
 	}
+
+	GCLK_GENCTRL_Type gclkConfig;
+	gclkConfig.reg = 0;
+	gclkConfig.reg = GCLK->GENCTRL[0].reg;
+	gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_OSC16M_Val;// GCLK_GENCTRL_SRC_OSCULP32K_Val ;//GCLK_GENCTRL_SRC_OSC16M_Val
+	GCLK->GENCTRL[0].reg = gclkConfig.reg;
+	
+	while (GCLK->SYNCBUSY.reg & GCLK_SYNCBUSY_GENCTRL(0)) {
+		/* Wait for synchronization */
+	};
+	OSCCTRL->OSC16MCTRL.reg |= OSCCTRL_OSC16MCTRL_ONDEMAND;
+	GCLK->GENCTRL[1].bit.GENEN = 0;
+	OSCCTRL->DFLLCTRL.bit.ENABLE = 0;
+/* Clear performance level status */
+	PM->INTFLAG.reg = PM_INTFLAG_PLRDY;
+/* Switch performance level to PL0 - best power saving */
+	PM->PLCFG.reg = PM_PLCFG_PLSEL_PL0_Val;
+		while (!PM->INTFLAG.reg) {
+			;
+		}
+		
 	// Disable systick interrupt:  See https://www.avrfreaks.net/forum/samd21-samd21e16b-sporadically-locks-and-does-not-wake-standby-sleep-mode
 	SysTick->CTRL &= ~SysTick_CTRL_TICKINT_Msk;	
-	__disable_irq();
+	
 	SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
 	__DSB();
 	__WFI();
 	// sleeping here, will wake from here ( except from OFF or Backup modes, those look like POR )
+
+	GCLK->GENCTRL[1].bit.GENEN = 1; // re-enable eosc32k
+	while (GCLK->SYNCBUSY.reg & GCLK_SYNCBUSY_GENCTRL(1)) {
+		/* Wait for synchronization */
+	};
+		// wait for clock to become ready
+	while ( (OSC32KCTRL->STATUS.reg & OSC32KCTRL_STATUS_XOSC32KRDY) == 0 );
+	
+	/* Clear performance level status */
+	PM->INTFLAG.reg = PM_INTFLAG_PLRDY;
+	/* Switch performance level to PL2 - Highest performance */
+	PM->PLCFG.reg = PM_PLCFG_PLSEL_PL2_Val;
+	/* Waiting performance level ready */
+	while (!PM->INTFLAG.reg) {
+		;
+	}
+	
+	OSCCTRL->DFLLCTRL.bit.ENABLE = 1;
+	while (!(OSCCTRL->STATUS.reg & OSCCTRL_STATUS_DFLLRDY)) {
+		/* Wait for DFLL sync */
+	}
+	gclkConfig.reg = 0;
+	gclkConfig.reg = GCLK->GENCTRL[0].reg;
+	gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_DFLL48M_Val;
+	GCLK->GENCTRL[0].reg = gclkConfig.reg;
+	while (GCLK->SYNCBUSY.reg & GCLK_SYNCBUSY_GENCTRL(0)) {
+		/* Wait for synchronization */
+	};
+//	GCLK->GENCTRL[0].reg |= GCLK_GENCTRL_GENEN;
+	/*  Switch to PL2 to be sure configuration of GCLK0 is safe */
+
+	
 	// Enable systick interrupt
-	__enable_irq();
-	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;	
+	SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk;
+	
 	if (restoreUSBDevice) {
-		USBDevice.attach();
-		
+		delay(1);
+		USBDevice.init();
+		USBDevice.attach();	
 	}
 }
 
@@ -121,44 +171,17 @@ void StampLowPower::attachInterruptWakeup(uint32_t pin, voidFuncPtr callback, ui
 	EExt_Interrupts in = g_APinDescription[pin].ulExtInt;
 	if (in == NOT_AN_INTERRUPT || in == EXTERNAL_INT_NMI)
     		return;
-
+			
 	//pinMode(pin, INPUT_PULLUP);
 	attachInterrupt(pin, callback, mode);
 
-	// enable EIC clock to use ULP 32k instead of FLL
-	GCLK_GENCTRL_Type gclkConfig;
-	/* Configure GCLK generator 6
-	* run in standby : 1
-	* source : Ultra low power OSC32K
-	* prescaler ( division factor ) : 1
-	* output enable to pin: 0
-	*/
-	gclkConfig.reg = 0;
-	gclkConfig.reg = GCLK->GENCTRL[6].reg;
-	gclkConfig.bit.DIV = 1;
-	gclkConfig.bit.SRC = GCLK_GENCTRL_SRC_OSCULP32K;
-	gclkConfig.bit.OE = 0;
-	gclkConfig.bit.RUNSTDBY = 1;
-
-	GCLK->GENCTRL[6].reg = gclkConfig.reg;
-	
-	while (GCLK->SYNCBUSY.reg & GCLK_SYNCBUSY_GENCTRL(1 << 6 )) {
-		/* Wait for synchronization */
-	};
-	
-	/* Enable generator */
-	GCLK->GENCTRL[6].reg |= GCLK_GENCTRL_GENEN;
-
-
-	
-		
-	//Put Generic Clock Generator 6 (ULP32k) as source for Peripheral channel 3 (EIC)
-	GCLK->PCHCTRL[GCM_EIC].reg = (GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK6);
-	while ((GCLK->PCHCTRL[GCM_EIC].reg & GCLK_PCHCTRL_CHEN) == 0);        // wait for sync
 	// Enable wakeup capability on pin in case being used during sleep
-	// EIC->INTENSET.reg |= (1 << in);
+	EIC->CTRLA.bit.CKSEL = 1; // use ULP32k as source ( SAML21 is different to D21 series, EIC can be set to use ULP32k without GCLK )
+  // Enable EIC
+	EIC->CTRLA.bit.ENABLE = 1;
+   while (EIC->SYNCBUSY.bit.ENABLE == 1) { /*wait for sync*/ }
 
-		/* Errata: Make sure that the Flash does not power all the way down
+	/* Errata: Make sure that the Flash does not power all the way down
      	* when in sleep mode. */
  	// NVMCTRL->CTRLB.bit.SLEEPPRM = NVMCTRL_CTRLB_SLEEPPRM_DISABLED_Val;
 	 NVMCTRL->CTRLB.bit.SLEEPPRM =  NVMCTRL_CTRLB_SLEEPPRM_WAKEUPINSTANT_Val;
@@ -166,4 +189,4 @@ void StampLowPower::attachInterruptWakeup(uint32_t pin, voidFuncPtr callback, ui
 
 StampLowPower LowPower;
 
-//#endif // ARDUINO_ARCH_SAMR
+#endif // ARDUINO_ARCH_SAMR
