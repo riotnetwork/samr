@@ -1,2 +1,4 @@
 
 bootloaders/r34/.vs/samr3x_sam_ba/v14/.atsuo
+libraries/Wire/Wire.cpp.bak
+*.bak

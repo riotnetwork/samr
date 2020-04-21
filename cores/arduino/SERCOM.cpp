@@ -29,6 +29,8 @@
 SERCOM::SERCOM(Sercom* s)
 {
   sercom = s;
+  timeoutOccurred = false;
+  timeoutInterval = SERCOM_DEFAULT_I2C_OPERATION_TIMEOUT_MS;
 }
 
 /* 	=========================
@@ -517,9 +519,10 @@ bool SERCOM::startTransmissionWIRE(uint8_t address, SercomWireReadWriteFlag flag
   sercom->I2CM.ADDR.bit.ADDR = address;
 
   // Address Transmitted
+  initTimeout();
   if ( flag == WIRE_WRITE_FLAG ) // Write mode
   {
-    while( !sercom->I2CM.INTFLAG.bit.MB )
+    while( !sercom->I2CM.INTFLAG.bit.MB && !testTimeout() )
     {
       // Wait transmission complete
     }
@@ -532,7 +535,7 @@ bool SERCOM::startTransmissionWIRE(uint8_t address, SercomWireReadWriteFlag flag
   }
   else  // Read mode
   {
-    while( !sercom->I2CM.INTFLAG.bit.SB )
+    while( !sercom->I2CM.INTFLAG.bit.SB && !testTimeout() )
     {
         // If the slave NACKS the address, the MB bit will be set.
         // In that case, send a stop condition and return false.
@@ -546,7 +549,8 @@ bool SERCOM::startTransmissionWIRE(uint8_t address, SercomWireReadWriteFlag flag
     // Clean the 'Slave on Bus' flag, for further usage.
     //sercom->I2CM.INTFLAG.bit.SB = 0x1ul;
   }
-
+  // check for timeout condition
+  if ( didTimeout() ) return false;
 
   //ACK received (0: ACK, 1: NACK)
   if(sercom->I2CM.STATUS.bit.RXNACK)
@@ -565,7 +569,8 @@ bool SERCOM::sendDataMasterWIRE(uint8_t data)
   sercom->I2CM.DATA.bit.DATA = data;
 
   //Wait transmission successful
-  while(!sercom->I2CM.INTFLAG.bit.MB) {
+    initTimeout();
+  while(!sercom->I2CM.INTFLAG.bit.MB && !testTimeout()) {
 
     // If a bus error occurs, the MB bit may never be set.
     // Check the bus error bit and bail if it's set.
@@ -573,7 +578,9 @@ bool SERCOM::sendDataMasterWIRE(uint8_t data)
       return false;
     }
   }
-
+	// check for timeout condition
+  if ( didTimeout() ) return false;
+  
   //Problems on line? nack received?
   if(sercom->I2CM.STATUS.bit.RXNACK)
     return false;
@@ -665,7 +672,8 @@ uint8_t SERCOM::readDataWIRE( void )
 {
   if(isMasterWIRE())
   {
-    while( sercom->I2CM.INTFLAG.bit.SB == 0 && sercom->I2CM.INTFLAG.bit.MB == 0 )
+    initTimeout();
+    while( sercom->I2CM.INTFLAG.bit.SB == 0 && sercom->I2CM.INTFLAG.bit.MB == 0 && !testTimeout() )
     {
       // Waiting complete receive
     }
@@ -739,4 +747,27 @@ void SERCOM::initClockNVIC( void )
   while ( (GCLK->PCHCTRL[clockId].reg & GCLK_PCHCTRL_CHEN) == 0 ){
 	  // wait for sync
   }
+}
+
+void SERCOM::setTimeout( uint16_t ms )
+{
+  timeoutInterval = ms;
+}
+
+bool SERCOM::didTimeout( void )
+{
+  return timeoutOccurred;
+}
+
+void SERCOM::initTimeout( void )
+{
+  timeoutOccurred = false;
+  timeoutRef = millis();
+}
+
+bool SERCOM::testTimeout( void )
+{
+  if (!timeoutInterval) return false;
+  timeoutOccurred = (millis() - timeoutRef) > timeoutInterval;
+  return timeoutOccurred;
 }
