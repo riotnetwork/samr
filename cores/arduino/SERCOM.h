@@ -213,7 +213,10 @@ class SERCOM
     bool isRXNackReceivedWIRE( void ) ;
 		int availableWIRE( void ) ;
 		uint8_t readDataWIRE( void ) ;
-
+		
+	void setTimeout( uint16_t ms );
+	bool didTimeout( void );
+	
 	private:
 		Sercom* sercom;
 		uint8_t calculateBaudrateSynchronous(uint32_t baudrate) ;
@@ -224,6 +227,7 @@ class SERCOM
 		// timeout detection for I2C operations
 		void initTimeout( void );
 		bool testTimeout( void );
+	
 		uint16_t timeoutInterval;
 		uint32_t timeoutRef;
 		bool timeoutOccurred;
