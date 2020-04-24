@@ -168,7 +168,8 @@ class SERCOM
 		void acknowledgeUARTError() ;
 		void enableDataRegisterEmptyInterruptUART();
 		void disableDataRegisterEmptyInterruptUART();
-
+		void disableUART( void );
+		
 		/* ========== SPI ========== */
 		void initSPI(SercomSpiTXPad mosi, SercomRXPad miso, SercomSpiCharSize charSize, SercomDataOrder dataOrder) ;
 		void initSPIClock(SercomSpiClockMode clockMode, uint32_t baudrate) ;
@@ -221,9 +222,6 @@ class SERCOM
 		Sercom* sercom;
 		uint8_t calculateBaudrateSynchronous(uint32_t baudrate) ;
 		uint32_t division(uint32_t dividend, uint32_t divisor) ;
-		void initClockNVIC( void ) ;
-		
-		
 		// timeout detection for I2C operations
 		void initTimeout( void );
 		bool testTimeout( void );
@@ -231,6 +229,14 @@ class SERCOM
 		uint16_t timeoutInterval;
 		uint32_t timeoutRef;
 		bool timeoutOccurred;
+		
+		void initClockNVIC( void ) ;
+		friend class StampLowPower ;
+		
 };
+
+		
+		
+		
 
 #endif

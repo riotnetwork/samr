@@ -154,6 +154,8 @@ class SPIClass {
   uint8_t interruptMode;
   char interruptSave;
   uint32_t interruptMask;
+  
+  friend class StampLowPower ;
 };
 
 #if SPI_INTERFACES_COUNT > 0
