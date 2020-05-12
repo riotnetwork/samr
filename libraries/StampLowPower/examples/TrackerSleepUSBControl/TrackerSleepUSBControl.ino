@@ -31,6 +31,8 @@ const int RTC_SLEEP_TIME_MS = 15000; // how long "backup" sleep will last
 volatile sleepModes_e sleepmode = SLEEP_IDLE;
 volatile bool wokenUp = false;
 uint32_t wakeupTime;
+boolean extWake = false;
+uint8_t  wakeReason;
 
 /*some basic settings for the SX1276 radio*/
 SPISettings SX1276(2000000, MSBFIRST, SPI_MODE0);
@@ -42,27 +44,32 @@ SPISettings SX1276(2000000, MSBFIRST, SPI_MODE0);
 
  // All pins are INPUT on power up by default
 void setup() {
-   pinMode(LED_BUILTIN, OUTPUT);
- pinMode(PERIPH_EN_PIN, OUTPUT);
-  pinMode(VBATT_MONIT_EN, OUTPUT);
-  pinMode(SX1276_RESET_PIN, OUTPUT);
-  pinMode(SX1276_TCXO_POWER_PIN, OUTPUT);
+    pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(PERIPH_EN_PIN, OUTPUT);
+    pinMode(VBATT_MONIT_EN, OUTPUT);
+    pinMode(SX1276_RESET_PIN, OUTPUT);
+    pinMode(SX1276_TCXO_POWER_PIN, OUTPUT);
 
-//  pinMode(STAT_LIPO_PIN, INPUT);
-  pinMode(VBUS_MONIT_PIN, INPUT);
-  pinMode(VBATT_MONIT_PIN, INPUT);
-  pinMode(BUTTON_PIN, INPUT);     // wakje on button press
+    //  pinMode(STAT_LIPO_PIN, INPUT);
+    pinMode(VBUS_MONIT_PIN, INPUT);
+    pinMode(VBATT_MONIT_PIN, INPUT);
+    pinMode(BUTTON_PIN, INPUT);     // wake on button press
 
-  digitalWrite(LED_BUILTIN,HIGH);
-  digitalWrite(PERIPH_EN_PIN, LOW);
-  digitalWrite(VBATT_MONIT_EN, LOW);
-  digitalWrite(SX1276_RESET_PIN, LOW);
-  digitalWrite(SX1276_TCXO_POWER_PIN, LOW);
+    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(PERIPH_EN_PIN, LOW);
+    digitalWrite(VBATT_MONIT_EN, LOW);
+    digitalWrite(SX1276_RESET_PIN, LOW);
+    digitalWrite(SX1276_TCXO_POWER_PIN, LOW);
 
-  SerialUSB.begin(115200);
-   
+     wakeReason = LowPower.getWakeupReason();
+    turnRadioOn(); // turn the Lora Radio on ( run mode )
+
+    SerialUSB.begin(115200);
+
     delay(1000);
-   SerialUSB.println("Sleep system ready \n1: IDLE\n2: STANDBY\n3:BACKUP \ns:Go to SLEEP \n");
+
+   
+    SerialUSB.println("Sleep system ready \n1: IDLE\n2: STANDBY\n3:BACKUP (RTC wake)\n4:BACKUP (USB VBUS wake) \ns:Go to SLEEP \n");
     wakeupTime = millis();
     delay(5000);
     SerialUSB.println(".");
@@ -73,44 +80,68 @@ void setup() {
 
 
 void loop() {
-/*wake up, clear the interrupt value*/
-  if (wokenUp)
-  {
-    wokenUp = false;  
-    digitalWrite(LED_BUILTIN, HIGH);
-  }
-
-  // handle some Serial comms
-  if (SerialUSB.available())
-  {
-    char c = SerialUSB.read();
-    switch (c)
+    /*wake up, clear the interrupt value*/
+    if (wokenUp)
     {
-      case '1':
-        SerialUSB.println("Setting sleep mode to SLEEP_IDLE");
-        sleepmode = SLEEP_IDLE;
-        LowPower.setSleepMode(sleepmode);
-      break;
-      case '2':
-        SerialUSB.println("Setting sleep mode to SLEEP_STANDBY");
-        sleepmode = SLEEP_STANDBY;
-        LowPower.setSleepMode(sleepmode);
-      break;
-      case '3':
-        SerialUSB.println("Setting sleep mode to SLEEP_BACKUP");
-        sleepmode = SLEEP_BACKUP;
-        LowPower.setSleepMode(sleepmode);
-      break;
-      case 's':
-      digitalWrite(VBATT_MONIT_EN,LOW);
-      gotoSleep();
-      break;
-      default:
-      break;
+        wokenUp = false;
+        digitalWrite(LED_BUILTIN, HIGH);
     }
-  }
-  delay(10);
-  
+
+    // handle some Serial comms
+    if (SerialUSB.available())
+    {
+       
+        char c = SerialUSB.read();
+        switch (c)
+        {
+        case '1':
+            SerialUSB.println("Setting sleep mode to SLEEP_IDLE");
+            sleepmode = SLEEP_IDLE;
+            LowPower.setSleepMode(sleepmode);
+            break;
+        case '2':
+            SerialUSB.println("Setting sleep mode to SLEEP_STANDBY");
+            sleepmode = SLEEP_STANDBY;
+            LowPower.setSleepMode(sleepmode);
+            break;
+        case '3':
+            SerialUSB.println("Setting sleep mode to SLEEP_BACKUP, Wake on RTC in 15 Seconds");
+            sleepmode = SLEEP_BACKUP;
+            extWake = false;
+            LowPower.setSleepMode(sleepmode);
+            break;
+        case '4':
+            SerialUSB.println("Setting sleep mode to SLEEP_BACKUP with External Wakeup on USB Vbus");
+            sleepmode = SLEEP_BACKUP;
+            extWake = true;
+            LowPower.attachWakeupfromBackup(VBUS_MONIT_PIN, HIGH);
+            LowPower.setSleepMode(sleepmode);
+            break;
+        case '?':
+           
+            switch (wakeReason)
+            {
+            case RSTC_BKUPEXIT_EXTWAKE:
+                SerialUSB.println("Woken from Backup by External Wakeup pin");
+                break;
+            case RSTC_BKUPEXIT_RTC:
+                SerialUSB.println("Woken from Backup by RTC");
+                break;
+            default:
+                SerialUSB.println("Power on or RESET happened..");
+                break;
+            }
+
+            break;
+        case 's':
+            gotoSleep();
+            break;
+        default:
+            break;
+        }
+    }
+    delay(10);
+
 }
 
 
@@ -121,89 +152,95 @@ void buttonPress() {
 }
 
 /*Prepare the syetem and go to teh required sleep mode*/
-void gotoSleep ()
+void gotoSleep()
 {
-  SerialUSB.print("Going to sleep in ");
-  uint32_t sleepSetting = PM->SLEEPCFG.bit.SLEEPMODE;
-  switch (sleepSetting)
-  {
+    SerialUSB.print("Going to sleep in ");
+    uint32_t sleepSetting = PM->SLEEPCFG.bit.SLEEPMODE;
+    switch (sleepSetting)
+    {
     case PM_SLEEPCFG_SLEEPMODE_IDLE:
-    SerialUSB.print("IDLE ");
-    break;
+        SerialUSB.print("IDLE ");
+        break;
     case PM_SLEEPCFG_SLEEPMODE_STANDBY:
-    SerialUSB.print("STANDBY ");
-    break;
+        SerialUSB.print("STANDBY ");
+        break;
     case PM_SLEEPCFG_SLEEPMODE_BACKUP:
-    SerialUSB.print("BACKUP ");
-    break;
+        SerialUSB.print("BACKUP ");
+        break;
     default:
-    break;
-  }
-  SerialUSB.println("mode");
-  setRadioSleep();
-  SerialUSB.flush();
-  delay(100); // give the serial / USB tome to finish the message
-  SerialUSB.end(); // NB !! call this to stop the USB interrupts from happening and continuously waking the system
+        break;
+    }
+    SerialUSB.println("mode");
+    SerialUSB.println("Sleeping in 5 seconds, unplug USB now...");
+    setRadioSleep();
+    delay(5000);
+  
+    SerialUSB.flush();
+    delay(100); // give the serial / USB tome to finish the message
+    SerialUSB.end(); // NB !! call this to stop the USB interrupts from happening and continuously waking the system
+    digitalWrite(LED_BUILTIN, LOW);
 
-
-  digitalWrite(LED_BUILTIN, LOW);
-    
-  if (sleepmode == SLEEP_BACKUP) // lowest power mode
-  {
-    LowPower.sleep(RTC_SLEEP_TIME_MS); // wake up in a few seconds - will look like a POR / Reset/ reboot - Pin interrupts dont work in backup mode
-  }
-  else {
-    LowPower.sleep(); // regular sleep, wait for ANY interrupt
-  }
-  turnRadioOn(); // Lora Radio is on
+    if (sleepmode == SLEEP_BACKUP) // lowest power mode
+    {
+        if (extWake == true) // do we wake on EXTwake pin (USB Vbus) or RTC ?
+        {
+            LowPower.sleep();
+        }
+        else {
+            LowPower.sleep(RTC_SLEEP_TIME_MS); // wake up in a few seconds - will look like a POR / Reset/ reboot - Pin interrupts dont work in backup mode
+        }
+       
+    }
+    else { // regular sleep, wait for ANY interrupt
+        LowPower.sleep();
+    }
+    turnRadioOn(); // Lora Radio is on
 }
 
 
 /* enable the SX1276 radio*/
 void turnRadioOn() {
-  pinMode(SX1276_RESET_PIN, OUTPUT);
-  pinMode(SX1276_TCXO_POWER_PIN, OUTPUT);
-  pinMode(SX1276_BAND_SEL_PIN, OUTPUT);
-  pinMode(SX1276_SPI_CS_PIN, OUTPUT);
-  SPI.begin();
-  digitalWrite(SX1276_SPI_CS_PIN, HIGH);
-  digitalWrite(SX1276_BAND_SEL_PIN, LOW);
-  digitalWrite(SX1276_TCXO_POWER_PIN, HIGH);
-  delay(5);
-  digitalWrite(SX1276_RESET_PIN, HIGH); // Lora Radio is on
-  delay(1);
-  
+    pinMode(SX1276_RESET_PIN, OUTPUT);
+    pinMode(SX1276_TCXO_POWER_PIN, OUTPUT);
+    pinMode(SX1276_BAND_SEL_PIN, OUTPUT);
+    pinMode(SX1276_SPI_CS_PIN, OUTPUT);
+    SPI.begin();
+    digitalWrite(SX1276_SPI_CS_PIN, HIGH);
+    digitalWrite(SX1276_BAND_SEL_PIN, LOW);
+    digitalWrite(SX1276_TCXO_POWER_PIN, HIGH);
+    delay(5);
+    digitalWrite(SX1276_RESET_PIN, HIGH); // Lora Radio is on
+    delay(1);
+
 }
 
 
 /*set the SX1276 radio to low power mode*/
 void setRadioSleep() {
+    turnRadioOn(); // ensure its on before we try and speak to it
+    uint8_t current_mode, op_mode;
+    uint8_t new_mode = SLEEP_MODE;
 
-  uint8_t current_mode,op_mode;
-  uint8_t new_mode = SLEEP_MODE;
+    op_mode = RADIO_RegisterRead(OPMODE_REG);
+    current_mode = op_mode & 0x07;
 
-  op_mode = RADIO_RegisterRead(OPMODE_REG);
-  current_mode = op_mode & 0x07;
-  SerialUSB.print("Current radio mode is ");
-  SerialUSB.println(current_mode);
-
-  if (new_mode != current_mode)
-  {
-    // Do the actual mode switch.
-    op_mode &= ~0x07;                // Clear old mode bits
-    op_mode |= new_mode;              // Set new mode bits
-    while (op_mode != RADIO_RegisterRead(OPMODE_REG))
+    if (new_mode != current_mode)
     {
-      RADIO_RegisterWrite(OPMODE_REG, op_mode);
+        // Do the actual mode switch.
+        op_mode &= ~0x07;                // Clear old mode bits
+        op_mode |= new_mode;              // Set new mode bits
+        while (op_mode != RADIO_RegisterRead(OPMODE_REG))
+        {
+            RADIO_RegisterWrite(OPMODE_REG, op_mode);
+        }
     }
-  }
 
-  op_mode = RADIO_RegisterRead(OPMODE_REG);
-  current_mode = op_mode & 0x07;
-  SerialUSB.print("New radio mode is ");
-  SerialUSB.println(current_mode);
-
-  SPI.end();
+    op_mode = RADIO_RegisterRead(OPMODE_REG);
+    current_mode = op_mode & 0x07;
+     
+    SPI.end();
+    // disable the  radio TCXO 
+    digitalWrite(SX1276_TCXO_POWER_PIN, LOW);
 }
 
 
@@ -214,12 +251,12 @@ void setRadioSleep() {
  */
 void RADIO_RegisterWrite(uint8_t reg, uint8_t value)
 {
-  SPI.beginTransaction(SX1276);
-  digitalWrite(SX1276_SPI_CS_PIN, LOW);
-  SPI.transfer(REG_WRITE_CMD | reg);
-  SPI.transfer(value);
-  digitalWrite(SX1276_SPI_CS_PIN, HIGH);
-  SPI.endTransaction();
+    SPI.beginTransaction(SX1276);
+    digitalWrite(SX1276_SPI_CS_PIN, LOW);
+    SPI.transfer(REG_WRITE_CMD | reg);
+    SPI.transfer(value);
+    digitalWrite(SX1276_SPI_CS_PIN, HIGH);
+    SPI.endTransaction();
 }
 
 /**
@@ -229,14 +266,14 @@ void RADIO_RegisterWrite(uint8_t reg, uint8_t value)
  */
 uint8_t RADIO_RegisterRead(uint8_t reg)
 {
-  uint8_t readValue;
-  reg &= 0x7F;    // Make sure write bit is not set
+    uint8_t readValue;
+    reg &= 0x7F;    // Make sure write bit is not set
 
-  SPI.beginTransaction(SX1276);
-  digitalWrite(SX1276_SPI_CS_PIN, LOW);
-  SPI.transfer(reg);
-  readValue = SPI.transfer(0xFF);
-  digitalWrite(SX1276_SPI_CS_PIN, HIGH);
-  SPI.endTransaction();
-  return readValue;
+    SPI.beginTransaction(SX1276);
+    digitalWrite(SX1276_SPI_CS_PIN, LOW);
+    SPI.transfer(reg);
+    readValue = SPI.transfer(0xFF);
+    digitalWrite(SX1276_SPI_CS_PIN, HIGH);
+    SPI.endTransaction();
+    return readValue;
 }

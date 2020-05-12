@@ -25,6 +25,7 @@ extern "C" {
 void initiateReset(int ms);
 void tickReset();
 void cancelReset();
+uint8_t resetCause();
 
  __attribute__ ((weak)) void resetExternalChip() {};
 

@@ -39,7 +39,7 @@ static void __initialize()
   NVIC_EnableIRQ(EIC_IRQn);
 
   // Enable GCLK for IEC (External Interrupt Controller), uses XOSC32k clock, will switch over to 32k ULP when we go to low power
-  GCLK->PCHCTRL[GCM_EIC].reg = ( GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0 ); // might not be needed as we use ulp32k as scource
+ // GCLK->PCHCTRL[GCM_EIC].reg = ( GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0 ); // might not be needed as we use ulp32k as scource
 
 /* Shall we do that?
   // Do a software reset on EIC

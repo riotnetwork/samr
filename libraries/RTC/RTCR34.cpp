@@ -42,7 +42,7 @@ RTCR34::RTCR34()
 void RTCR34::begin(bool resetTime)
 {
 // make sure OSC32KCTRL has the 1.024kHz output enabled
-	config32kOSC();
+//	config32kOSC();
 // Setup clock MLCK and OSC32KCTRL for RTC
 	configureClock();
 // disable RTC before we change any settings
@@ -438,9 +438,10 @@ void RTCR34::setY2kEpoch(uint32_t ts)
 void RTCR34::configureClock() {
 	/* Turn on the digital interface clock */
    MCLK->APBAMASK.reg |= MCLK_APBAMASK_RTC;
-   OSC32KCTRL->RTCCTRL.reg = OSC32KCTRL_RTCCTRL_RTCSEL_XOSC1K;
+   OSC32KCTRL->RTCCTRL.reg = OSC32KCTRL_RTCCTRL_RTCSEL_ULP1K;  //OSC32KCTRL_RTCCTRL_RTCSEL_XOSC1K
+
   // wait for clock to become ready
-  while ( (OSC32KCTRL->STATUS.reg & OSC32KCTRL_STATUS_XOSC32KRDY) == 0 );
+ // while ( (OSC32KCTRL->STATUS.reg & OSC32KCTRL_STATUS_XOSC32KRDY) == 0 );
   
 }
 
@@ -449,20 +450,20 @@ void RTCR34::configureClock() {
  */
 
 /* Configure the 32768Hz Oscillator */
-void RTCR34::config32kOSC() 
-{
-#ifndef CRYSTALLESS
-  OSC32KCTRL->XOSC32K.reg = OSC32KCTRL_XOSC32K_ONDEMAND |
-                            OSC32KCTRL_XOSC32K_RUNSTDBY |
-                            OSC32KCTRL_XOSC32K_EN32K |
-							OSC32KCTRL_XOSC32K_EN1K |
-                            OSC32KCTRL_XOSC32K_XTALEN |
-                            OSC32KCTRL_XOSC32K_STARTUP(4) |
-                            OSC32KCTRL_XOSC32K_ENABLE;
-							// wait for clock to become ready
-							while ( (OSC32KCTRL->STATUS.reg & OSC32KCTRL_STATUS_XOSC32KRDY) == 0 );
-#endif
-}
+//void RTCR34::config32kOSC() 
+//{
+//#ifndef CRYSTALLESS
+//  OSC32KCTRL->XOSC32K.reg = OSC32KCTRL_XOSC32K_ONDEMAND |
+//                            OSC32KCTRL_XOSC32K_RUNSTDBY |
+//                            OSC32KCTRL_XOSC32K_EN32K |
+//						 	  OSC32KCTRL_XOSC32K_EN1K |
+//                            OSC32KCTRL_XOSC32K_XTALEN |
+//                            OSC32KCTRL_XOSC32K_STARTUP(4) |
+//                            OSC32KCTRL_XOSC32K_ENABLE;
+//							// wait for clock to become ready
+//							while ( (OSC32KCTRL->STATUS.reg & OSC32KCTRL_STATUS_XOSC32KRDY) == 0 );
+//#endif
+//}
 
 /* Synchronise the CLOCK register for reading*/
 inline void RTCR34::RTCreadRequest() {

@@ -158,6 +158,19 @@ typedef enum
   EXTERNAL_INT_NONE = NOT_AN_INTERRUPT,
 } EExt_Interrupts ;
 
+typedef enum
+{
+	EXTERNAL_WAKE_0 = 0,
+	EXTERNAL_WAKE_1,
+	EXTERNAL_WAKE_2,
+	EXTERNAL_WAKE_3,
+	EXTERNAL_WAKE_4,
+	EXTERNAL_WAKE_5,
+	EXTERNAL_WAKE_6,
+	EXTERNAL_WAKE_7,
+	EXTERNAL_WAKE_NUM,
+} EExt_Wake ;
+
 //A    B                 C       D          E      F   G   H        I
 //EIC REF ADC AC PTC DAC SERCOM SERCOM_ALT TC/TCC TCC COM AC/GCLK  CCL
 

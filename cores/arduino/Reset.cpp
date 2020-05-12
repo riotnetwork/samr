@@ -86,6 +86,42 @@ void tickReset() {
 		banzai();
 }
 
+/*Get the Reset Cause*/
+uint8_t resetCause(){
+	uint8_t rstCause;
+	
+	uint8_t  RcauseReg = RSTC->RCAUSE.reg;
+	if (RcauseReg & RSTC_RCAUSE_POR)  /*!< bit:      0  Power On Reset                     */
+	{
+		rstCause = RSTC_RCAUSE_POR;
+	}
+	else if (RcauseReg & RSTC_RCAUSE_BOD12)  /*!< bit:      1  Brown Out 12 Detector Reset        */
+	{
+		rstCause = RSTC_RCAUSE_BOD12;
+	}
+	else if (RcauseReg & RSTC_RCAUSE_BOD33)  /*!< bit:      2  Brown Out 33 Detector Reset        */
+	{
+		rstCause = RSTC_RCAUSE_BOD33;
+	}
+	else if (RcauseReg & RSTC_RCAUSE_EXT)  /*!< bit:      4  External Reset                     */
+	{
+		rstCause = RSTC_RCAUSE_EXT;
+	}
+	else if (RcauseReg & RSTC_RCAUSE_WDT)  /*!< bit:      5  Watchdog Reset                     */
+	{
+		rstCause = RSTC_RCAUSE_WDT;
+	}
+	else if (RcauseReg & RSTC_RCAUSE_SYST)  /*!< bit:      6  System Reset Request               */
+	{
+		rstCause = RSTC_RCAUSE_SYST;
+	}
+	else if (RcauseReg & RSTC_RCAUSE_BACKUP)  /*!< bit:      7  Backup Reset                       */
+	{
+		rstCause = RSTC_RCAUSE_BACKUP;
+	}
+	return rstCause;
+}
+
 #ifdef __cplusplus
 }
 #endif
