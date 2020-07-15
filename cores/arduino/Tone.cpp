@@ -19,7 +19,9 @@
 #include "Tone.h"
 #include "variant.h"
 
-#define WAIT_TC16_REGS_SYNC(x) while(x->COUNT16.STATUS.bit.PERBUFV);
+//#define WAIT_TC16_REGS_SYNC(x) while(x->COUNT16.STATUS.bit.PERBUFV);
+#define WAIT_TC16_REGS_SYNC(x) while(x->COUNT16.SYNCBUSY.reg & TCC_SYNCBUSY_MASK);
+
 
 uint32_t toneMaxFrequency = F_CPU / 2;
 uint32_t lastOutputPin = 0xFFFFFFFF;
@@ -57,6 +59,14 @@ void toneAccurateClock (uint32_t accurateSystemCoreClockFrequency)
 
 void tone (uint32_t outputPin, uint32_t frequency, uint32_t duration)
 {
+	
+	// Avoid divide by zero error by calling 'noTone' instead
+	if (frequency == 0)
+	{
+		noTone(outputPin);
+		return;
+	}
+	 
   // Configure interrupt request
   NVIC_DisableIRQ(TONE_TC_IRQn);
   NVIC_ClearPendingIRQ(TONE_TC_IRQn);
@@ -67,12 +77,13 @@ void tone (uint32_t outputPin, uint32_t frequency, uint32_t duration)
     
     NVIC_SetPriority(TONE_TC_IRQn, 0);
       
-    // Enable GCLK for TC4 and TC5 (timer counter input clock)
+    // Enable GCLK for TC4  (timer counter input clock)
      GCLK->PCHCTRL[GCM_TC4].reg = ( GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK0 );
      while ( (GCLK->PCHCTRL[GCM_TC4].reg & GCLK_PCHCTRL_CHEN) == 0 ){
 	     // wait for sync
-     }
-  
+	 }
+  }
+		
   if (toneIsActive && (outputPin != lastOutputPin))
     noTone(lastOutputPin);
 
@@ -117,25 +128,29 @@ void tone (uint32_t outputPin, uint32_t frequency, uint32_t duration)
 
   toggleCount = (duration > 0 ? frequency * duration * 2 / 1000UL : -1LL);
 
-  resetTC(TONE_TC);
+// Disable and reset the TC
+   resetTC(TONE_TC);
 
   uint16_t tmpReg = 0;
   tmpReg |= TC_CTRLA_MODE_COUNT16;  // Set Timer counter Mode to 16 bits
-  tmpReg |= prescalerConfigBits;
+  tmpReg |= prescalerConfigBits; // set prescaler
+ // tmpReg |= TC_CTRLA_ONDEMAND;
   TONE_TC->COUNT16.CTRLA.reg |= tmpReg;
+  WAIT_TC16_REGS_SYNC(TONE_TC)
+  
   TONE_TC->COUNT16.WAVE.reg = TC_WAVE_WAVEGEN_MFRQ; // set counter to frequency match mode
   WAIT_TC16_REGS_SYNC(TONE_TC)
 
   TONE_TC->COUNT16.CC[TONE_TC_CHANNEL].reg = (uint16_t) ccValue;
   WAIT_TC16_REGS_SYNC(TONE_TC)
-
+  
+  // Enable the TONE_TC interrupt request
+  TONE_TC->COUNT16.INTENSET.bit.MC0 = 1;
+  
   portToggleRegister = &(PORT->Group[g_APinDescription[outputPin].ulPort].OUTTGL.reg);
   portClearRegister = &(PORT->Group[g_APinDescription[outputPin].ulPort].OUTCLR.reg);
   portBitMask = (1ul << g_APinDescription[outputPin].ulPin);
 
-  // Enable the TONE_TC interrupt request
-  TONE_TC->COUNT16.INTENSET.bit.MC0 = 1;
-  
   if (outputPin != lastOutputPin)
   {
     lastOutputPin = outputPin;
@@ -143,20 +158,29 @@ void tone (uint32_t outputPin, uint32_t frequency, uint32_t duration)
     pinMode(outputPin, OUTPUT);
     toneIsActive = true;
   }
-
+  
   // Enable TONE_TC
   TONE_TC->COUNT16.CTRLA.reg |= TC_CTRLA_ENABLE;
-  WAIT_TC16_REGS_SYNC(TONE_TC)
-  
+  WAIT_TC16_REGS_SYNC(TONE_TC);
+  TONE_TC->COUNT16.CTRLBSET.reg |=  TC_CTRLBSET_CMD_RETRIGGER;
   NVIC_EnableIRQ(TONE_TC_IRQn);
-}
 }
 
 void noTone (uint32_t outputPin)
 {
-  resetTC(TONE_TC);
-  digitalWrite(outputPin, LOW);
-  toneIsActive = false;
+   /* 'tone' need to run at least once in order to enable GCLK for
+   * the timers used for the tone-functionality. If 'noTone' is called
+   * without ever calling 'tone' before then 'WAIT_TC16_REGS_SYNC(TCx)'
+   * will wait infinitely. The variable 'firstTimeRunning' is set the
+   * 1st time 'tone' is set so it can be used to detect wether or not
+   * 'tone' has been called before.
+   */
+  if(firstTimeRunning)
+  {
+    resetTC(TONE_TC);
+    digitalWrite(outputPin, LOW);
+    toneIsActive = false;
+  }
 }
 
 #ifdef __cplusplus

@@ -66,7 +66,7 @@ void TC0_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void TC1_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void TC2_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void TC3_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
-void TC4_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
+void TC4_Handler      (void) __attribute__ ((weak)); // Used in Tone.cpp
 void ADC_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void AC_Handler       (void) __attribute__ ((weak, alias("Dummy_Handler")));
 void DAC_Handler      (void) __attribute__ ((weak, alias("Dummy_Handler")));
