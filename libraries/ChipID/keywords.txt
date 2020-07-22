@@ -1,0 +1,24 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Class (KEYWORD1)
+#######################################
+
+ChipID	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+ChipIDdump	KEYWORD2
+ChipID8dump	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+UniqueID8	LITERAL1
+UniqueID	LITERAL1
+UniqueIDsize	LITERAL1
