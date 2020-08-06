@@ -27,7 +27,7 @@ This core is an arduino port for the Microchip ATSAMR34 and R35 Series microcont
 
 ## License and credits
 
-This core has been developed by Arduino LLC in collaboration with Atmel.
+This core has been developed by RIOT network based on works by Arduino LLC in collaboration with Atmel as well as some influences from Wiz-IO .
 
 ```
   Copyright (c) 2015 Arduino LLC.  All right reserved.
