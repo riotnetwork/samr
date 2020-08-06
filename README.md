@@ -27,7 +27,7 @@ This core is an arduino port for the Microchip ATSAMR34 and R35 Series microcont
 
 ## License and credits
 
-This core has been developed by RIOT network based on works by Arduino LLC in collaboration with Atmel as well as some influences from Wiz-IO .
+This core has been developed by RIOT network based on works by Arduino LLC in collaboration with Atmel as well as some influences from [Wiz-IO](https://github.com/Wiz-IO/platform-sam-lora) .
 
 ```
   Copyright (c) 2015 Arduino LLC.  All right reserved.
@@ -46,3 +46,5 @@ This core has been developed by RIOT network based on works by Arduino LLC in co
   License along with this library; if not, write to the Free Software
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ```
+#ToDo's
+integrate with platformIO 
