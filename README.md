@@ -1,4 +1,5 @@
-## R34 stamp is designed around Microchip’s ATSAMR34J18 SiP,  a 32-bit Arm Cortex-M0+ MCU (256Kb of Flash, 40Kb of RAM, 8kb of RWW flash) with an internal SX1276 LoRa transceiver. The SiP has a maximum power output of 20.00dBm, a frequency range of 862 to 1020MHz, and a 790nA sleep current.
+
+R34 stamp is designed around Microchip’s ATSAMR34J18 SiP,  a 32-bit Arm Cortex-M0+ MCU (256Kb of Flash, 40Kb of RAM, 8kb of RWW flash) with an internal SX1276 LoRa transceiver. The SiP has a maximum power output of 20.00dBm, a frequency range of 862 to 1020MHz, and a 790nA sleep current.
 
 This core is an arduino port for the Microchip ATSAMR34 Series microcontrollers - ATSAML21 with integrated SX1276 LoRa Tranceivers
 
@@ -19,7 +20,7 @@ JSON URL : https://raw.githubusercontent.com/riotnetwork/samr-json/master/packag
 
 * Restart Arduino IDE and look under Tools > Boards and you should see the addition of the Riot boards in your board list.
 
-
+## RIOT R34 Stamp
 This core is an arduino port for the Microchip ATSAMR34 and R35 Series microcontrollers - ATSAML21 with integrated LoRa Tranceivers
 
 ![R34 pinout](https://github.com/riotnetwork/samr-json/blob/master/Pinouts/PNG/R34-Stamp.png)
