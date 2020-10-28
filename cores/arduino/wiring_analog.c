@@ -103,7 +103,7 @@ void analogReference(eAnalogReference mode)
       break;
 
     case AR_EXTERNAL:
-      ADC->REFCTRL.bit.REFSEL = ADC_REFCTRL_REFSEL_AREFA_Val;
+      ADC->REFCTRL.bit.REFSEL = ADC_REFCTRL_REFSEL_AREFB_Val;
       break;
 
     case AR_INTERNAL1V65:
