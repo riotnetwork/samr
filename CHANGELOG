@@ -1,5 +1,10 @@
-SAMD CORE ?.?.?? ????.??.??
+SAMR CORE 1.0.10
+updated to use arduino API in samd core 1.8.11
+merged Commits on Apr 6, 2021 on https://github.com/arduino/ArduinoCore-samd/commits/master
 
+SAMR CORE 1.0.9
+SAMR34 ( and SAML21 ) port of arduino samd
+based on SAMD CORE 1.6.21 2019.04.01
 SAMD CORE 1.6.21 2019.04.01
 
 * MKR boards: changed I2C to sercom2, SPI1 + Serial2 to sercom4

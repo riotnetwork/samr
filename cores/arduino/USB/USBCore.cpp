@@ -20,16 +20,26 @@
 
 #include <Arduino.h>
 
+#include "api/USBAPI.h"
+#include "USBAPI.h"
 #include "SAMD21_USBDevice.h"
-#include "PluggableUSB.h"
 #include "CDC.h"
+#include "api/PluggableUSB.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <limits.h>
 
+using namespace arduino;
+
+/*
+ * USB Device instance
+ * -------------------
+ */
+
 USBDevice_SAMD21G18x usbd;
+USBDeviceClass USBDevice;
 
 /** Pulse generation counters to keep track of the number of milliseconds remaining for each pulse type */
 #define TX_RX_LED_PULSE_MS 100
@@ -221,13 +231,10 @@ bool USBDeviceClass::sendDescriptor(USBSetup &setup)
 		else if (setup.wValueL == ISERIAL) {
 			char name[ISERIAL_MAX_LEN];
 			memset(name, 0, sizeof(name));
-			uint8_t idx = 0;
 #ifdef PLUGGABLE_USB_ENABLED
-			idx += PluggableUSB().getShortName(&name[idx]);
+			PluggableUSB().getShortName(name);
+			return sendStringDescriptor((uint8_t*)name, setup.wLength);
 #endif
-			if (idx > 0) {
-				return sendStringDescriptor((uint8_t*)name, setup.wLength);
-			}
 		}
 		else {
 			return false;
@@ -436,9 +443,6 @@ void USBDeviceClass::initEP(uint32_t ep, uint32_t config)
 		usbd.epBank1SetSize(ep, 64);
 		usbd.epBank1SetAddress(ep, &udd_ep_in_cache_buffer[ep]);
 		usbd.epBank1SetType(ep, 1); // CONTROL IN
-		
-	//	usbd.epBank0SetReady(ep);
-	//	usbd.epBank1ResetReady(ep);
 
 		// Release OUT EP
 		usbd.epReleaseOutBank0(ep, 64);
@@ -917,21 +921,24 @@ void USBDeviceClass::ISRHandler()
 				epHandlers[ep]->handleEndpoint();
 			} else {
 				#if defined(PLUGGABLE_USB_ENABLED)
-				PluggableUSB().handleEndpoint(ep);
+				SerialUSB.handleEndpoint(ep);
 				usbd.epAckPendingInterrupts(ep);
 				#endif
 			}
 		}
 	}
-	
 }
 
-/*
- * USB Device instance
- * -------------------
- */
+// PluggableUSB contructor
+PluggableUSB_::PluggableUSB_() : lastIf(0),
+                                 lastEp(1),
+                                 rootNode(NULL), totalEP(USB_ENDPOINTS)
+{
+	// Empty
+}
 
-// USBDevice class instance
-USBDeviceClass USBDevice;
+void* epBuffer(unsigned int lastEp) {
+	return &(EndPoints[lastEp]);
+}
 
 #endif

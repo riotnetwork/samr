@@ -20,9 +20,8 @@ extern "C" {
   #include "stdlib.h"
   #include "stdint.h"
 }
-#include "WMath.h"
 
-extern void randomSeed( uint32_t dwSeed )
+void randomSeed( uint32_t dwSeed )
 {
   if ( dwSeed != 0 )
   {
@@ -30,7 +29,7 @@ extern void randomSeed( uint32_t dwSeed )
   }
 }
 
-extern long random( long howbig )
+long random( long howbig )
 {
   if ( howbig == 0 )
   {
@@ -40,7 +39,7 @@ extern long random( long howbig )
   return rand() % howbig;
 }
 
-extern long random( long howsmall, long howbig )
+long random( long howsmall, long howbig )
 {
   if (howsmall >= howbig)
   {

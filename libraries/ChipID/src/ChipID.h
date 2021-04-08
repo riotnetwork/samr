@@ -60,6 +60,9 @@ class ChipID
   public:
 	ChipID();
 	uint8_t id[UniqueIDbuffer];
+	uint64_t *lower64;
+	uint64_t *upper64;
+	uint64_t unique64;
 };
 
 extern ChipID _UniqueID;

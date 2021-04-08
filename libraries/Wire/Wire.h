@@ -20,24 +20,26 @@
 #ifndef TwoWire_h
 #define TwoWire_h
 
-#include "Stream.h"
+#include "api/HardwareI2C.h"
 #include "variant.h"
-
 #include "SERCOM.h"
-#include "RingBuffer.h"
 
  // WIRE_HAS_END means Wire has end()
 #define WIRE_HAS_END 1
 // WIRE_HAS_TIMEOUT means Wire implements timeout detection
 #define WIRE_HAS_TIMEOUT 1
 
+namespace arduino {
 
-class TwoWire : public Stream
+class TwoWire : public HardwareI2C
 {
   public:
     TwoWire(SERCOM *s, uint8_t pinSDA, uint8_t pinSCL);
     void begin();
-    void begin(uint8_t, bool enableGeneralCall = false);
+    void begin(uint8_t address, bool enableGeneralCall);
+    void begin(uint8_t address) {
+        begin(address, false);
+    }
     void end();
     void setClock(uint32_t);
 
@@ -45,8 +47,8 @@ class TwoWire : public Stream
     uint8_t endTransmission(bool stopBit);
     uint8_t endTransmission(void);
 
-    uint8_t requestFrom(uint8_t address, size_t quantity, bool stopBit);
-    uint8_t requestFrom(uint8_t address, size_t quantity);
+    size_t requestFrom(uint8_t address, size_t quantity, bool stopBit);
+    size_t requestFrom(uint8_t address, size_t quantity);
 
 	
 	bool didTimeout() { return sercom->didTimeout(); }
@@ -82,10 +84,10 @@ class TwoWire : public Stream
 
 
     // RX Buffer
-    RingBufferN<256> rxBuffer;
+    arduino::RingBufferN<256> rxBuffer;
 
     //TX buffer
-    RingBufferN<256> txBuffer;
+    arduino::RingBufferN<256> txBuffer;
     uint8_t txAddress;
 
     // Callback user functions
@@ -98,23 +100,25 @@ class TwoWire : public Stream
 	friend class StampLowPower ;
 };
 
+}
+
 #if WIRE_INTERFACES_COUNT > 0
-  extern TwoWire Wire;
+  extern arduino::TwoWire Wire;
 #endif
 #if WIRE_INTERFACES_COUNT > 1
-  extern TwoWire Wire1;
+  extern arduino::TwoWire Wire1;
 #endif
 #if WIRE_INTERFACES_COUNT > 2
-  extern TwoWire Wire2;
+  extern arduino::TwoWire Wire2;
 #endif
 #if WIRE_INTERFACES_COUNT > 3
-  extern TwoWire Wire3;
+  extern arduino::TwoWire Wire3;
 #endif
 #if WIRE_INTERFACES_COUNT > 4
-  extern TwoWire Wire4;
+  extern arduino::TwoWire Wire4;
 #endif
 #if WIRE_INTERFACES_COUNT > 5
-  extern TwoWire Wire5;
+  extern arduino::TwoWire Wire5;
 #endif
 
 #endif

@@ -99,25 +99,29 @@ void analogReference(eAnalogReference mode)
   {
     case AR_INTERNAL:
     case AR_INTERNAL2V00:
+//	  ADC->INPUTCTRL.bit.GAIN = ADC_INPUTCTRL_GAIN_1X_Val;      // Gain Factor Selection not on SAMR34
       ADC->REFCTRL.bit.REFSEL = ADC_REFCTRL_REFSEL_INTVCC0_Val; // 1/1.6 VDDANA = 1/1.6* 3V3 = 2.0625
       break;
 
     case AR_EXTERNAL:
+//	  ADC->INPUTCTRL.bit.GAIN = ADC_INPUTCTRL_GAIN_1X_Val;      // Gain Factor Selection not on SAMR34
       ADC->REFCTRL.bit.REFSEL = ADC_REFCTRL_REFSEL_AREFA_Val;
       break;
 
     case AR_INTERNAL1V65:
+//	  ADC->INPUTCTRL.bit.GAIN = ADC_INPUTCTRL_GAIN_1X_Val;      // Gain Factor Selection not on SAMR34
       ADC->REFCTRL.bit.REFSEL = ADC_REFCTRL_REFSEL_INTVCC1_Val; // 1/2 VDDANA = 0.5* 3V3 = 1.65V
       break;
 
     case AR_DEFAULT:
     default:
+//      ADC->INPUTCTRL.bit.GAIN = ADC_INPUTCTRL_GAIN_DIV2_Val; // not on SAMR34
       ADC->REFCTRL.bit.REFSEL = ADC_REFCTRL_REFSEL_INTVCC1_Val; // 1/2 VDDANA = 0.5* 3V3 = 1.65V
       break;
   }
 }
 
-uint32_t analogRead(uint32_t pin)
+int analogRead(pin_size_t pin)
 {
   uint32_t valueRead = 0;
 
@@ -157,6 +161,9 @@ uint32_t analogRead(uint32_t pin)
   syncADC(ADC_SYNCBUSY_ENABLE_Pos);
   ADC->SWTRIG.bit.START = 1;
 
+  // Waiting for the 1st conversion to complete
+  //while (ADC->INTFLAG.bit.RESRDY == 0);
+
   // Clear the Data Ready flag
   ADC->INTFLAG.reg = ADC_INTFLAG_RESRDY;
 
@@ -180,7 +187,7 @@ uint32_t analogRead(uint32_t pin)
 // hardware support.  These are defined in the appropriate
 // pins_*.c file.  For the rest of the pins, we default
 // to digital output.
-void analogWrite(uint32_t pin, uint32_t value)
+void analogWrite(pin_size_t pin, int value)
 {
   PinDescription pinDesc = g_APinDescription[pin];
   uint32_t attr = pinDesc.ulPinAttribute;
@@ -194,9 +201,8 @@ void analogWrite(uint32_t pin, uint32_t value)
     }
 
     value = mapResolution(value, _writeResolution, 10);
-
     syncDAC();
-    DAC->DATA->reg = DAC_DATA_DATA(value & 0x3FF);  // DAC on 10 bits.
+	DAC->DATA->reg = DAC_DATA_DATA(value & 0x3FF);  // DAC on 10 bits.
     syncDAC();
     DAC->CTRLA.bit.ENABLE = 0x01;     // Enable DAC
     syncDAC();
@@ -225,8 +231,6 @@ void analogWrite(uint32_t pin, uint32_t value)
       // We suppose that attr has PIN_ATTR_TIMER_ALT bit set...
       pinPeripheral(pin, PIO_TIMER_ALT);
     }
-	
-
 
     if (!tcEnabled[tcNum]) {
       tcEnabled[tcNum] = true;

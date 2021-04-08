@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include "sync.h"
+
 typedef uint8_t ep_t;
 
 class USBDevice_SAMD21G18x {
@@ -49,11 +51,11 @@ public:
 	inline void runInStandby()   { usb.CTRLA.bit.RUNSTDBY = 1; }
 	inline void noRunInStandby() { usb.CTRLA.bit.RUNSTDBY = 0; }
 	inline void wakeupHost()     { usb.CTRLB.bit.UPRSM = 1; }
-		
+
 	// USB QoS
 	inline void setDataSensitiveQoS() { usb.QOSCTRL.bit.DQOS = 2; }
 	inline void setConfigSensitiveQoS() { usb.QOSCTRL.bit.CQOS = 2; }
-		
+
 	// USB speed
 	inline void setFullSpeed()       { usb.CTRLB.bit.SPDCONF = USB_DEVICE_CTRLB_SPDCONF_FS_Val;   }
 	inline void setLowSpeed()        { usb.CTRLB.bit.SPDCONF = USB_DEVICE_CTRLB_SPDCONF_LS_Val;   }
@@ -185,7 +187,7 @@ public:
 private:
 	// USB Device registers
 	UsbDevice &usb;
-
+	arduino::RingBuffer _rx_buffer;
 	// Endpoints descriptors table
 	__attribute__((__aligned__(4)))	UsbDeviceDescriptor EP[USB_EPT_NUM];
 };
@@ -250,32 +252,6 @@ void USBDevice_SAMD21G18x::calibrate() {
 	usb.PADCAL.bit.TRANSP = pad_transp;
 	usb.PADCAL.bit.TRIM   = pad_trim;
 }
-
-/*
- * Synchronization primitives.
- * TODO: Move into a separate header file and make an API out of it
- */
-
-class __Guard {
-public:
-	__Guard() : primask(__get_PRIMASK()), loops(1) {
-		__disable_irq();
-	}
-	~__Guard() {
-		if (primask == 0) {
-			__enable_irq();
-			// http://infocenter.arm.com/help/topic/com.arm.doc.dai0321a/BIHBFEIB.html
-			__ISB();
-		}
-	}
-	uint32_t enter() { return loops--; }
-private:
-	uint32_t primask;
-	uint32_t loops;
-};
-
-#define synchronized for (__Guard __guard; __guard.enter(); )
-
 
 /*
  * USB EP generic handlers.
@@ -452,7 +428,7 @@ public:
 private:
 	USBDevice_SAMD21G18x &usbd;
 
-	RingBuffer _rx_buffer;
+	arduino::RingBuffer _rx_buffer;
 
 	const uint32_t ep;
 	volatile uint32_t current, incoming;

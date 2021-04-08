@@ -26,6 +26,9 @@ ChipID::ChipID()
 		id[i*4+2] = (uint8_t)(pdwUniqueID[i] >> 8);
 		id[i*4+3] = (uint8_t)(pdwUniqueID[i] >> 0);
 	}
+	lower64 = &id[0];
+	upper64 = &id[8];
+	unique64 = (*lower64) ^ (*upper64);
 
 }
 

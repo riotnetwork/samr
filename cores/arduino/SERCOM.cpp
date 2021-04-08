@@ -582,8 +582,8 @@ bool SERCOM::sendDataMasterWIRE(uint8_t data)
   while(!sercom->I2CM.INTFLAG.bit.MB && !testTimeout()) {
 
     // If a bus error occurs, the MB bit may never be set.
-    // Check the bus error bit and bail if it's set.
-    if (sercom->I2CM.STATUS.bit.BUSERR) {
+    // Check the bus error bit and bail if it's set., from pr https://github.com/arduino/ArduinoCore-samd/pull/591/files
+    if (sercom->I2CM.STATUS.bit.BUSERR || sercom->I2CM.STATUS.bit.ARBLOST) {
       return false;
     }
   }
