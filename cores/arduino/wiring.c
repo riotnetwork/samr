@@ -115,7 +115,7 @@ void init( void )
   ADC->AVGCTRL.reg = ADC_AVGCTRL_SAMPLENUM_1 |    // 1 sample only (no oversampling nor averaging)
                      ADC_AVGCTRL_ADJRES(0x0ul);   // Adjusting result by 0
 
-  analogReference( AR_DEFAULT ) ; // Analog Reference is AREF pin (3.3v)
+  analogReference( AR_INTERNAL2V00 ) ; // Analog Reference is internal 2V reference (see wiring analog)
 
   // Initialize DAC
   // Setting clock
