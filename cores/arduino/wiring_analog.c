@@ -105,7 +105,7 @@ void analogReference(eAnalogReference mode)
 
     case AR_EXTERNAL:
 //	  ADC->INPUTCTRL.bit.GAIN = ADC_INPUTCTRL_GAIN_1X_Val;      // Gain Factor Selection not on SAMR34
-      ADC->REFCTRL.bit.REFSEL = ADC_REFCTRL_REFSEL_AREFA_Val;
+      ADC->REFCTRL.bit.REFSEL = ADC_REFCTRL_REFSEL_AREFB_Val;
       break;
 
     case AR_INTERNAL1V65:
